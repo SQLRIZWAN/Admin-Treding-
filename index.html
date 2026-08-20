@@ -831,6 +831,10 @@ select.inp:focus{box-shadow:0 0 0 3px rgba(0,200,83,.15);}
                             <label style="color:var(--textG);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:6px;">UPI ID for Deposits</label>
                             <input type="text" class="inp" id="setting-upi" placeholder="yourname@upi">
                         </div>
+                        <div style="margin-bottom:16px;">
+                            <label style="color:var(--textG);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:6px;">USDT Address (TRC20)</label>
+                            <input type="text" class="inp" id="setting-usdt" placeholder="TRC20 wallet address">
+                        </div>
                         <button onclick="savePaymentSettings()" class="btn btn-p" style="width:100%;">Save Payment Settings</button>
                     </div>
                     <div class="card" style="margin-bottom:12px;">
@@ -3623,7 +3627,7 @@ function markAllNotifRead() {
 // ═══════════════════════════════════════════════════
 function loadSettings() {
     db.collection(COLLECTIONS.ADMIN_CONFIG).doc('config').get()
-        .then(doc => { if (doc.exists) { const d = doc.data(); document.getElementById('setting-upi').value = d.upi||''; } })
+        .then(doc => { if (doc.exists) { const d = doc.data(); document.getElementById('setting-upi').value = d.upi||''; document.getElementById('setting-usdt').value = d.usdtAddress||''; } })
         .catch(()=>{});
     db.collection(COLLECTIONS.WEBSITE_CONFIG).doc('config').get()
         .then(doc => {
@@ -3642,7 +3646,7 @@ function loadSettings() {
 }
 
 function savePaymentSettings() {
-    db.collection(COLLECTIONS.ADMIN_CONFIG).doc('config').set({ upi: document.getElementById('setting-upi').value.trim() }, { merge: true })
+    db.collection(COLLECTIONS.ADMIN_CONFIG).doc('config').set({ upi: document.getElementById('setting-upi').value.trim(), usdtAddress: document.getElementById('setting-usdt').value.trim() }, { merge: true })
         .then(() => { showToast('Payment settings saved ✓'); logAdminAction('update_payment_settings','Updated payment settings'); })
         .catch(e => showToast(e.message,'err'));
 }
