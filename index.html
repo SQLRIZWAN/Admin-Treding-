@@ -762,7 +762,7 @@ select.inp:focus{box-shadow:0 0 0 3px rgba(0,200,83,.15);}
 
                     <div class="card" style="margin-bottom:12px;">
                         <div style="font-weight:700;font-size:14px;margin-bottom:6px;color:var(--warning);"><i class="fas fa-percentage mr-2"></i>Broker Charges (%)</div>
-                        <div style="color:var(--textG);font-size:12px;margin-bottom:14px;">Ye hi aapki kamai hai — order price bilkul chart wali live price par lagti hai, koi hidden spread nahi.</div>
+                        <div style="color:var(--textG);font-size:12px;margin-bottom:14px;">This is your earnings — orders fill at the live chart price, with no hidden spread.</div>
                         <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;">
                             <div>
                                 <label style="color:var(--textG);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:6px;">Open Fee (%)</label>
@@ -778,7 +778,7 @@ select.inp:focus{box-shadow:0 0 0 3px rgba(0,200,83,.15);}
 
                     <div class="card" style="margin-bottom:12px;">
                         <div style="font-weight:700;font-size:14px;margin-bottom:6px;color:var(--info);"><i class="fas fa-layer-group mr-2"></i>Leverage</div>
-                        <div style="color:var(--textG);font-size:12px;margin-bottom:14px;">Default <b>2000x</b>. Max 100000 likhne par "Unlimited" maana jayega. User ko sirf neeche diye gaye options dikhte hain.</div>
+                        <div style="color:var(--textG);font-size:12px;margin-bottom:14px;">Default <b>2000x</b>. Enter 100000 for "Unlimited". Users only see the options listed below.</div>
                         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px;">
                             <div>
                                 <label style="color:var(--textG);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:6px;">Min</label>
@@ -845,7 +845,7 @@ select.inp:focus{box-shadow:0 0 0 3px rgba(0,200,83,.15);}
                             </div>
                         </div>
                         <div style="color:var(--textG);font-size:12px;margin-bottom:12px;">
-                            TradingView <b>tvSymbol</b> wahi hona chahiye jo chart use karta hai (jaise <code>FX:EURUSD</code>, <code>OANDA:XAUUSD</code>) — tabhi order price aur chart price 100% same rahenge.
+                            The TradingView <b>tvSymbol</b> must match the chart symbol (e.g. <code>FX:EURUSD</code>, <code>OANDA:XAUUSD</code>) so order price and chart price stay 100% identical.
                         </div>
                         <div style="margin-bottom:12px;">
                             <input type="search" class="inp" id="fx-inst-search" placeholder="Search symbol / name..." oninput="renderForexInstruments()">
@@ -3222,7 +3222,7 @@ const FX_DEFAULT_INSTRUMENTS = [
 const FX_DEFAULT_CONFIG = {
     forexEnabled: true, cfdEnabled: true, oneClickTrading: true,
     brokerFeeOpenPct: 0.02, brokerFeeClosePct: 0.02,
-    defaultLeverage: 2000, minLeverage: 1, maxLeverage: 100000,
+    defaultLeverage: 2000, minLeverage: 1, maxLeverage: 100000, leveragePresetVersion: 2,
     leverageOptions: [1,2,3,5,10,20,50,100,200,500,1000,2000,5000],
     maintenanceMarginPct: 50, minDepositUSDT: 10,
     minLot: 0.01, maxLot: 100, lotStep: 0.01,
@@ -3272,7 +3272,7 @@ function loadForexAdmin() {
 function updateFeePreview() {
     const o = num('fx-fee-open', 0), c = num('fx-fee-close', 0);
     document.getElementById('fx-fee-preview').innerHTML =
-        `1 lot (100k) ki trade par: open <b>${o}%</b> + close <b>${c}%</b> = total <b>${(o + c).toFixed(3)}%</b> aapki income. Order price chart wali live price.`;
+        `On a 1-lot (100k) trade: open <b>${o}%</b> + close <b>${c}%</b> = <b>${(o + c).toFixed(3)}%</b> total. Orders fill at the live chart price.`;
     const fo = document.getElementById('fx-fee-open'), fc = document.getElementById('fx-fee-close');
     fo.oninput = updateFeePreview; fc.oninput = updateFeePreview;
 }
@@ -3289,6 +3289,7 @@ function collectForexConfig() {
         brokerFeeClosePct: num('fx-fee-close', 0.02),
         minLeverage: num('fx-lev-min', 1),
         maxLeverage: maxLev,
+        leveragePresetVersion: 2,
         defaultLeverage: num('fx-lev-default', 2000),
         leverageOptions: opts.length ? opts : FX_DEFAULT_CONFIG.leverageOptions,
         minLot: num('fx-min-lot', 0.01),
@@ -3442,7 +3443,7 @@ function toggleInstrument(id, enabled) {
 }
 
 function deleteInstrument(id, name) {
-    showConfirm('Delete Instrument', `"${name || id}" website se hat jayega. Sure?`, 'danger', () => {
+    showConfirm('Delete Instrument', `Remove "${name || id}" from the website?`, 'danger', () => {
         db.collection('forexInstruments').doc(id).delete()
             .then(() => {
                 _fxInstDocs = _fxInstDocs.filter(x => x.id !== id);
