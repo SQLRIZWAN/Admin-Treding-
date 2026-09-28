@@ -68,7 +68,7 @@ select.inp{cursor:pointer;}
 .glass{background:rgba(21,26,33,.95);backdrop-filter:blur(20px);border:1px solid var(--border);}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;transition:border-color var(--transition);}
 .card:hover{border-color:rgba(0,200,83,.25);}
-.stat-card{background:linear-gradient(145deg,var(--surface),var(--surfaceL));border:1px solid var(--border);border-radius:var(--radius-md);padding:20px;}
+.stat-card{background:linear-gradient(145deg,var(--surface),var(--surfaceL));border:1px solid var(--border);border-radius:var(--radius-md);padding:16px;}
 
 /* ── BADGES ── */
 .badge{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;display:inline-block;letter-spacing:.3px;}
@@ -96,14 +96,15 @@ select.inp{cursor:pointer;}
 }
 
 /* ── BOTTOM NAV ── */
-.bottom-nav{position:fixed;bottom:0;left:0;right:0;height:calc(var(--nav-h) + env(safe-area-inset-bottom));background:rgba(11,14,17,.98);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-top:1px solid var(--border);display:flex;z-index:150;align-items:flex-start;padding-top:0;}
-.bn-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;transition:all var(--transition);position:relative;color:var(--textG);height:var(--nav-h);}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;height:calc(var(--nav-h) + env(safe-area-inset-bottom));background:rgba(11,14,17,.98);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-top:1px solid var(--border);display:flex;z-index:150;align-items:flex-start;padding-top:0;overflow-x:auto;scrollbar-width:none;}
+.bottom-nav::-webkit-scrollbar{display:none;}
+.bn-item{flex:1 1 0;min-width:50px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;transition:all var(--transition);position:relative;color:var(--textG);height:var(--nav-h);}
 .bn-item.active{color:var(--primary);}
 .bn-icon-wrap{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;transition:all var(--transition);}
 .bn-item.active .bn-icon-wrap{background:var(--primary-dim);}
 .bn-item .bn-icon{font-size:18px;transition:all var(--transition);}
 .bn-item.active .bn-icon{color:var(--primary);}
-.bn-item .bn-label{font-size:9px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;}
+.bn-item .bn-label{font-size:8px;font-weight:700;letter-spacing:.2px;text-transform:uppercase;white-space:nowrap;}
 .bn-badge{position:absolute;top:4px;right:calc(50% - 18px);background:var(--danger);color:#fff;border-radius:20px;font-size:8px;font-weight:700;padding:1px 5px;min-width:15px;text-align:center;border:1.5px solid var(--bg);}
 /* ── PAYMENT CARDS ── */
 .pay-user-chip{display:flex;align-items:center;gap:10px;padding:4px 0;}
@@ -279,10 +280,18 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;heigh
 
 /* ── Desktop only ── */
 @media(min-width:1024px){
-    .page-header{padding:20px 24px 12px;}
-    .tab-content{padding:20px 24px;}
+    body{font-size:15px;}
+    .page-header{padding:20px 28px 12px;}
+    .tab-content{padding:20px 28px;}
+    .dash-stats{grid-template-columns:repeat(4,1fr)!important;}
+    .stat-card{padding:18px 16px;}
+    .stat-card .stat-val{font-size:26px !important;}
     .modal{align-items:center;}
     .modal-box{border-radius:var(--radius-lg);max-width:700px;}
+}
+/* Ultra-wide: cap content so it never stretches into a sparse "zoomed out" grid */
+@media(min-width:1500px){
+    .tab-content{max-width:1400px;margin-left:auto;margin-right:auto;}
 }
 
 /* Safe area - handled by bottom-nav height already */
@@ -299,7 +308,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;heigh
 .sub-tabs::-webkit-scrollbar{display:none;}
 .st-btn{white-space:nowrap;min-width:max-content;}
 .user-card:active{background:var(--surfaceL);}
-@media(max-width:1023px){.lg-hide{display:none!important;}}
+@media(min-width:1024px){.lg-hide{display:none!important;}}
 
 /* ── UI POLISH ── */
 *{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}
@@ -462,8 +471,18 @@ select.inp:focus{box-shadow:0 0 0 3px rgba(0,200,83,.15);}
                 </div>
                 <div id="global-search-results" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:8px;margin-top:-8px;margin-bottom:12px;max-height:300px;overflow-y:auto;"></div>
 
-                <!-- Dashboard Stat Cards 2x2 Grid -->
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+                <!-- Currency display filter (INR / USDT) -->
+                <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+                    <span style="font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--textG);"><i class="fas fa-coins" style="margin-right:6px;"></i>Currency</span>
+                    <div class="chips" style="margin:0;">
+                        <button type="button" class="chip" data-cur="both" onclick="setCurMode('both')">INR + USDT</button>
+                        <button type="button" class="chip" data-cur="inr" onclick="setCurMode('inr')">INR ₹</button>
+                        <button type="button" class="chip" data-cur="usdt" onclick="setCurMode('usdt')">USDT $</button>
+                    </div>
+                </div>
+
+                <!-- Dashboard Stat Cards -->
+                <div class="dash-stats" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
                     <div class="stat-card" style="border-left:3px solid var(--warning);cursor:pointer;" onclick="switchTab('payment');switchPaymentTab('deposits');switchDepositStatusTab('pending')">
                         <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
                             <div style="width:32px;height:32px;background:var(--warning-dim);border-radius:8px;display:flex;align-items:center;justify-content:center;">
@@ -471,7 +490,7 @@ select.inp:focus{box-shadow:0 0 0 3px rgba(0,200,83,.15);}
                             </div>
                             <span style="color:var(--textG);font-size:11px;font-weight:600;">PENDING</span>
                         </div>
-                        <div style="font-size:26px;font-weight:700;color:var(--warning);" id="stat-pending-deposits">—</div>
+                        <div class="stat-val" style="font-size:26px;font-weight:700;color:var(--warning);" id="stat-pending-deposits">—</div>
                         <div style="color:var(--textG);font-size:11px;margin-top:2px;">Deposit Requests</div>
                     </div>
                     <div class="stat-card" style="border-left:3px solid var(--purple);cursor:pointer;" onclick="switchTab('payment');switchPaymentTab('withdrawals');switchWithdrawalStatusTab('pending')">
@@ -481,7 +500,7 @@ select.inp:focus{box-shadow:0 0 0 3px rgba(0,200,83,.15);}
                             </div>
                             <span style="color:var(--textG);font-size:11px;font-weight:600;">PENDING</span>
                         </div>
-                        <div style="font-size:26px;font-weight:700;color:var(--purple);" id="stat-pending-withdrawals">—</div>
+                        <div class="stat-val" style="font-size:26px;font-weight:700;color:var(--purple);" id="stat-pending-withdrawals">—</div>
                         <div style="color:var(--textG);font-size:11px;margin-top:2px;">Withdrawal Requests</div>
                     </div>
                     <div class="stat-card" style="border-left:3px solid var(--primary);">
@@ -491,7 +510,7 @@ select.inp:focus{box-shadow:0 0 0 3px rgba(0,200,83,.15);}
                             </div>
                             <span style="color:var(--textG);font-size:11px;font-weight:600;">TODAY</span>
                         </div>
-                        <div style="font-size:20px;font-weight:700;color:var(--primary);" id="stat-today-deposits">—</div>
+                        <div class="stat-val" style="font-size:20px;font-weight:700;color:var(--primary);" id="stat-today-deposits">—</div>
                         <div style="color:var(--textG);font-size:11px;margin-top:2px;">Total Deposits</div>
                     </div>
                     <div class="stat-card" style="border-left:3px solid var(--danger);">
@@ -501,7 +520,7 @@ select.inp:focus{box-shadow:0 0 0 3px rgba(0,200,83,.15);}
                             </div>
                             <span style="color:var(--textG);font-size:11px;font-weight:600;">TODAY</span>
                         </div>
-                        <div style="font-size:20px;font-weight:700;color:var(--danger);" id="stat-today-withdrawals">—</div>
+                        <div class="stat-val" style="font-size:20px;font-weight:700;color:var(--danger);" id="stat-today-withdrawals">—</div>
                         <div style="color:var(--textG);font-size:11px;margin-top:2px;">Total Withdrawals</div>
                     </div>
                 </div>
@@ -567,6 +586,16 @@ select.inp:focus{box-shadow:0 0 0 3px rgba(0,200,83,.15);}
 
                 <!-- Filter Bar Active Chips -->
                 <div id="payment-active-filters" class="chips" style="display:none;margin-bottom:12px;"></div>
+
+                <!-- Currency display filter (INR / USDT) -->
+                <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+                    <span style="font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--textG);"><i class="fas fa-coins" style="margin-right:6px;"></i>Currency</span>
+                    <div class="chips" style="margin:0;">
+                        <button type="button" class="chip" data-cur="both" onclick="setCurMode('both')">INR + USDT</button>
+                        <button type="button" class="chip" data-cur="inr" onclick="setCurMode('inr')">INR ₹</button>
+                        <button type="button" class="chip" data-cur="usdt" onclick="setCurMode('usdt')">USDT $</button>
+                    </div>
+                </div>
 
                 <!-- Bulk Action Bar -->
                 <div class="bulk-bar" id="bulk-bar-payment">
@@ -1005,6 +1034,11 @@ select.inp:focus{box-shadow:0 0 0 3px rgba(0,200,83,.15);}
                             <label style="color:var(--textG);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:6px;">USDT Address (TRC20)</label>
                             <input type="text" class="inp" id="setting-usdt" placeholder="TRC20 wallet address">
                         </div>
+                        <div style="margin-bottom:16px;">
+                            <label style="color:var(--textG);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:6px;">USDT ↔ INR Rate (1 USDT = ₹)</label>
+                            <input type="number" step="0.01" min="1" class="inp" id="setting-usdtrate" placeholder="103">
+                            <div style="color:var(--textG);font-size:11px;margin-top:6px;"><i class="fas fa-info-circle" style="margin-right:4px;"></i>Used everywhere in the store for USDT ↔ ₹ conversion</div>
+                        </div>
                         <button onclick="savePaymentSettings()" class="btn btn-p" style="width:100%;">Save Payment Settings</button>
                     </div>
                     <div class="card" style="margin-bottom:12px;">
@@ -1023,7 +1057,7 @@ select.inp:focus{box-shadow:0 0 0 3px rgba(0,200,83,.15);}
                                 <input type="color" class="inp" id="setting-color" value="#00c853" style="height:50px;padding:8px;cursor:pointer;flex:1;">
                                 <button onclick="resetColorToDefault()" class="btn btn-s" style="height:50px;white-space:nowrap;flex-shrink:0;"><i class="fas fa-undo" style="margin-right:6px;"></i>Default</button>
                             </div>
-                            <div style="color:var(--textG);font-size:11px;margin-top:6px;"><i class="fas fa-info-circle" style="margin-right:4px;"></i>Agar sirf Title/Email save karni hai to Color mat badlo</div>
+                            <div style="color:var(--textG);font-size:11px;margin-top:6px;"><i class="fas fa-info-circle" style="margin-right:4px;"></i>Only saving Title/Email? Leave the color as it is.</div>
                         </div>
                         <button onclick="saveWebsiteSettings()" class="btn btn-p" style="width:100%;">Save Website Config</button>
                     </div>
@@ -1049,6 +1083,13 @@ select.inp:focus{box-shadow:0 0 0 3px rgba(0,200,83,.15);}
                                 <div style="color:var(--textG);font-size:12px;">Process withdrawals</div>
                             </div>
                             <label class="toggle"><input type="checkbox" id="toggle-withdrawals" checked onchange="savePlatformToggle('withdrawalsEnabled',this.checked)"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+                        </div>
+                        <div class="label-row">
+                            <div>
+                                <div style="font-weight:600;">Trading</div>
+                                <div style="color:var(--textG);font-size:12px;">Allow opening new trades</div>
+                            </div>
+                            <label class="toggle"><input type="checkbox" id="toggle-trading" checked onchange="savePlatformToggle('tradingEnabled',this.checked)"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
                         </div>
                         <div class="label-row">
                             <div>
@@ -1093,6 +1134,24 @@ select.inp:focus{box-shadow:0 0 0 3px rgba(0,200,83,.15);}
                 <i class="fas fa-users bn-icon"></i>
             </div>
             <span class="bn-label">Users</span>
+        </div>
+        <div class="bn-item" id="bn-forex" onclick="bnGo('forex')">
+            <div class="bn-icon-wrap">
+                <i class="fas fa-chart-line bn-icon"></i>
+            </div>
+            <span class="bn-label">Forex</span>
+        </div>
+        <div class="bn-item" id="bn-invest" onclick="bnGo('invest')">
+            <div class="bn-icon-wrap">
+                <i class="fas fa-coins bn-icon"></i>
+            </div>
+            <span class="bn-label">Invest</span>
+        </div>
+        <div class="bn-item" id="bn-settings" onclick="bnGo('settings')">
+            <div class="bn-icon-wrap">
+                <i class="fas fa-sliders bn-icon"></i>
+            </div>
+            <span class="bn-label">Settings</span>
         </div>
         <div class="bn-item" id="bn-tools" onclick="switchTab('tools')">
             <div class="bn-icon-wrap">
@@ -1244,11 +1303,11 @@ select.inp:focus{box-shadow:0 0 0 3px rgba(0,200,83,.15);}
             </div>
             <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:12px;">
                 <div>
-                    <label style="color:var(--textG);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:6px;">Min Investment (₹)</label>
+                    <label style="color:var(--textG);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:6px;">Min Investment (INR)</label>
                     <input type="number" class="inp" id="invest-min" placeholder="1000">
                 </div>
                 <div>
-                    <label style="color:var(--textG);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:6px;">Max Investment (₹)</label>
+                    <label style="color:var(--textG);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:6px;">Max Investment (INR)</label>
                     <input type="number" class="inp" id="invest-max" placeholder="100000">
                 </div>
             </div>
@@ -1417,11 +1476,11 @@ select.inp:focus{box-shadow:0 0 0 3px rgba(0,200,83,.15);}
                 <div style="font-weight:700;font-size:13px;margin-bottom:10px;">Amount Range</div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
                     <div>
-                        <label style="color:var(--textG);font-size:11px;font-weight:600;display:block;margin-bottom:4px;">Min (₹)</label>
+                        <label style="color:var(--textG);font-size:11px;font-weight:600;display:block;margin-bottom:4px;">Min (INR)</label>
                         <input type="number" class="inp" id="pf-amt-min" placeholder="0">
                     </div>
                     <div>
-                        <label style="color:var(--textG);font-size:11px;font-weight:600;display:block;margin-bottom:4px;">Max (₹)</label>
+                        <label style="color:var(--textG);font-size:11px;font-weight:600;display:block;margin-bottom:4px;">Max (INR)</label>
                         <input type="number" class="inp" id="pf-amt-max" placeholder="No limit">
                     </div>
                 </div>
@@ -1462,11 +1521,11 @@ select.inp:focus{box-shadow:0 0 0 3px rgba(0,200,83,.15);}
                 <div style="font-weight:700;font-size:13px;margin-bottom:10px;">Balance Range</div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
                     <div>
-                        <label style="color:var(--textG);font-size:11px;font-weight:600;display:block;margin-bottom:4px;">Min Balance (₹)</label>
+                        <label style="color:var(--textG);font-size:11px;font-weight:600;display:block;margin-bottom:4px;">Min Balance (INR)</label>
                         <input type="number" class="inp" id="lf-bal-min" placeholder="0">
                     </div>
                     <div>
-                        <label style="color:var(--textG);font-size:11px;font-weight:600;display:block;margin-bottom:4px;">Max Balance (₹)</label>
+                        <label style="color:var(--textG);font-size:11px;font-weight:600;display:block;margin-bottom:4px;">Max Balance (INR)</label>
                         <input type="number" class="inp" id="lf-bal-max" placeholder="No limit">
                     </div>
                 </div>
@@ -1505,6 +1564,47 @@ try { firebase.initializeApp(firebaseConfig); } catch(e){ console.error('Firebas
 const auth = firebase.auth();
 const db = firebase.firestore();
 const ALLOWED_ADMINS = ['admin@trendingstore.com','sql@gmail.com'];
+
+// ═══════════════════════════════════
+// 💱 CURRENCY DISPLAY (INR / USDT clarity)
+// ═══════════════════════════════════
+let admCurMode = 'both';
+try { admCurMode = localStorage.getItem('admCurMode') || 'both'; } catch(e){}
+let admRate = 103;
+try { const _r = Number(localStorage.getItem('admRate')); if (_r > 0) admRate = _r; } catch(e){}
+
+function setAdmRate(v){ const n = Number(v); if (n > 0) { admRate = n; try{ localStorage.setItem('admRate', String(n)); }catch(e){} } }
+function fmtINR(v){ const n = Number(v) || 0; return '₹' + n.toLocaleString('en-IN',{maximumFractionDigits:2}); }
+function fmtUSDT(v){ const n = Number(v) || 0; return n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}) + ' USDT'; }
+function mny(inr){
+    const n = Number(inr) || 0;
+    if (admCurMode === 'inr') return fmtINR(n);
+    if (admCurMode === 'usdt') return fmtUSDT(n / admRate);
+    return fmtINR(n) + ' · ' + fmtUSDT(n / admRate);
+}
+function mnyUSDT(usdt){ const n = Number(usdt) || 0; if (admCurMode === 'usdt') return fmtUSDT(n); if (admCurMode === 'inr') return fmtINR(n * admRate); return fmtINR(n * admRate) + ' · ' + fmtUSDT(n); }
+function mnyOne(inr){ const n = Number(inr) || 0; return fmtINR(n) + ' · ' + fmtUSDT(n / admRate); }
+function syncCurChips(){ document.querySelectorAll('[data-cur]').forEach(b => b.classList.toggle('active', b.getAttribute('data-cur') === admCurMode)); }
+function setCurMode(m){
+    admCurMode = (m === 'inr' || m === 'usdt') ? m : 'both';
+    try { localStorage.setItem('admCurMode', admCurMode); } catch(e){}
+    syncCurChips();
+    if (!currentUser) return;
+    if (currentTab === 'home') { initializeDashboardListeners(); loadRecentActivity(); }
+    else loadTabData(currentTab);
+    showToast('Amounts shown in ' + (admCurMode === 'both' ? 'INR + USDT' : admCurMode.toUpperCase()));
+}
+function curFilterHTML(label){
+    return `<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+        <span style="font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--textG);"><i class="fas fa-coins" style="margin-right:6px;"></i>${label||'Currency'}</span>
+        <div class="chips" style="margin:0;">
+            <button type="button" class="chip" data-cur="both" onclick="setCurMode('both')">INR + USDT</button>
+            <button type="button" class="chip" data-cur="inr" onclick="setCurMode('inr')">INR ₹</button>
+            <button type="button" class="chip" data-cur="usdt" onclick="setCurMode('usdt')">USDT $</button>
+        </div>
+    </div>`;
+}
+try { syncCurChips(); } catch(e){}
 
 // ═══════════════════════════════════════════════════
 // 🗂️ STATE
@@ -1602,22 +1702,28 @@ function togglePasswordVis() {
 // ═══════════════════════════════════════════════════
 // 🧭 NAVIGATION
 // ═══════════════════════════════════════════════════
+function syncBnActive(){
+    const want = (currentTab === 'tools' && document.getElementById('bn-' + currentToolsTab)) ? 'bn-' + currentToolsTab : 'bn-' + currentTab;
+    document.querySelectorAll('.bn-item').forEach(el => el.classList.toggle('active', el.id === want));
+}
+function bnGo(sub){
+    switchTab('tools');
+    switchToolsTab(sub);
+}
 function switchTab(tab) {
     currentTab = tab;
     ['home','payment','allusers','tools'].forEach(t => {
         const el = document.getElementById(`tab-${t}`);
-        const bn = document.getElementById(`bn-${t}`);
         const nav = document.getElementById(`nav-${t}`);
         if (t === tab) {
             if(el) el.classList.add('active');
-            if (bn) bn.classList.add('active');
             if (nav) nav.classList.add('active');
         } else {
             if(el) el.classList.remove('active');
-            if (bn) bn.classList.remove('active');
             if (nav) nav.classList.remove('active');
         }
     });
+    syncBnActive();
     closeSidebar();
     loadTabData(tab);
     window.scrollTo(0, 0);
@@ -1689,6 +1795,7 @@ function switchToolsTab(tab) {
     else if (tab === 'analytics') loadAnalytics(7);
     else if (tab === 'notifications') loadNotificationsHistory();
     else if (tab === 'settings') loadSettings();
+    syncBnActive();
 }
 
 function openSidebar() {
@@ -1766,9 +1873,9 @@ function initializeDashboardListeners() {
                 const ts = dt.timestamp?.toDate ? dt.timestamp.toDate() : null;
                 if (ts && ts >= todayStart) todayTotal += amt;
             });
-            document.getElementById('stat-deposits').textContent = '₹' + total.toLocaleString('en-IN');
+            document.getElementById('stat-deposits').textContent = mny(total);
             const el = document.getElementById('stat-today-deposits');
-            if (el) el.textContent = '₹' + todayTotal.toLocaleString('en-IN');
+            if (el) el.textContent = mny(todayTotal);
         }).catch(err => console.error('total dep:', err));
 
     // ── Approved withdrawals today (use get() for performance) ──
@@ -1782,7 +1889,7 @@ function initializeDashboardListeners() {
                 if (ts && ts >= todayStart) todayWd += (dt.amount||0);
             });
             const el = document.getElementById('stat-today-withdrawals');
-            if (el) el.textContent = '₹' + todayWd.toLocaleString('en-IN');
+            if (el) el.textContent = mny(todayWd);
         }).catch(err => console.error('today wd:', err));
 }
 
@@ -1809,7 +1916,7 @@ function loadRecentActivity() {
 
         container.innerHTML = top10.map(item => {
             const isD = item._type === 'deposit';
-            const amt = item.amount ? '₹'+item.amount.toLocaleString() : (item.usdtAmount ? item.usdtAmount+' USDT' : '—');
+            const amt = item.amount ? mny(item.amount) : (item.usdtAmount ? mnyUSDT(item.usdtAmount) : '—');
             const statusClass = item.status === 'approved' ? 'b-green' : item.status === 'rejected' ? 'b-red' : 'b-yellow';
             const ico = isD ? 'fa-arrow-down' : 'fa-arrow-up';
             const icoColor = isD ? 'var(--primary)' : 'var(--danger)';
@@ -1993,7 +2100,7 @@ function applyClientFilters(data) {
 }
 
 function depositCard(dep) {
-    const amt = dep.amount ? '₹'+dep.amount.toLocaleString() : (dep.usdtAmount ? dep.usdtAmount+' USDT' : '—');
+    const amt = dep.amount ? mny(dep.amount) : (dep.usdtAmount ? mnyUSDT(dep.usdtAmount) : '—');
     const st = dep.status || 'pending';
     const stClass = st === 'approved' ? 'b-green' : st === 'rejected' ? 'b-red' : 'b-yellow';
     const time = safeDate(dep.timestamp);
@@ -2039,7 +2146,7 @@ function depositCard(dep) {
 function quickApproveDeposit(id) {
     const dep = depositsCache.find(d => d.id === id);
     if(!dep) return;
-    const amt = dep.amount ? '₹'+dep.amount.toLocaleString() : '—';
+    const amt = dep.amount ? mny(dep.amount) : '—';
     showConfirm('Approve Deposit', 'Credit ' + amt + ' to ' + (dep.userName||'user') + '?', 'success', () => approveDeposit(id));
 }
 function quickRejectDeposit(id) {
@@ -2055,7 +2162,7 @@ function openDepositDetail(id) {
 }
 
 function showDepositModal(dep) {
-    const amt = dep.amount ? '₹'+dep.amount.toLocaleString() : (dep.usdtAmount ? dep.usdtAmount+' USDT' : '—');
+    const amt = dep.amount ? mny(dep.amount) : (dep.usdtAmount ? mnyUSDT(dep.usdtAmount) : '—');
     const st = dep.status || 'pending';
     document.getElementById('txn-modal-title').textContent = 'Deposit: '+amt;
     document.getElementById('txn-modal-body').innerHTML = `
@@ -2193,7 +2300,7 @@ function withdrawalCard(wd) {
             <div style="flex:1;min-width:0;" onclick="openWithdrawalDetail('${wd.id}')">
                 <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:2px;">
                     <span style="font-weight:700;font-size:14px;">${userName}</span>
-                    <span style="font-weight:700;font-size:15px;color:var(--danger);">₹${(wd.amount||0).toLocaleString()}</span>
+                    <span style="font-weight:700;font-size:15px;color:var(--danger);">${mny(wd.amount||0)}</span>
                 </div>
                 <div style="color:var(--textG);font-size:11px;margin-bottom:4px;">${wd.userPhone||wd.uid?.substring(0,12)||'—'}</div>
                 <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
@@ -2215,7 +2322,7 @@ function withdrawalCard(wd) {
 function quickApproveWithdrawal(id) {
     const wd = withdrawalsCache.find(d => d.id === id);
     if(!wd) return;
-    showConfirm('Approve Withdrawal', 'Confirm you have transferred ₹' + (wd.amount||0).toLocaleString() + ' to ' + (wd.userName||'user') + '?', 'warn', () => approveWithdrawal(id));
+    showConfirm('Approve Withdrawal', 'Confirm you have transferred ' + mny(wd.amount||0) + ' to ' + (wd.userName||'user') + '?', 'warn', () => approveWithdrawal(id));
 }
 function quickRejectWithdrawal(id) {
     showConfirm('Reject Withdrawal', 'Reject and refund this withdrawal?', 'danger', () => rejectWithdrawal(id));
@@ -2231,7 +2338,7 @@ function openWithdrawalDetail(id) {
 
 function showWithdrawalModal(wd) {
     const st = wd.status || 'pending';
-    document.getElementById('txn-modal-title').textContent = 'Withdrawal: ₹'+(wd.amount||0).toLocaleString();
+    document.getElementById('txn-modal-title').textContent = 'Withdrawal: '+mny(wd.amount||0);
     // QR / screenshot image — check all possible field names
     const imgUrl = wd.qrImage || wd.qrUrl || wd.screenshotUrl || wd.imageUrl || wd.qr || wd.image || wd.qrCode || wd.attachment || '';
     // UPI — check all possible field names
@@ -2243,12 +2350,12 @@ function showWithdrawalModal(wd) {
                 style="width:100%;max-height:220px;object-fit:contain;border-radius:var(--radius-md);border:1px solid var(--border);background:var(--surfaceL);cursor:pointer;" 
                 onclick="viewImage('${imgUrl}')" 
                 loading="lazy"
-                onerror="this.parentNode.innerHTML='<div style=padding:16px;text-align:center;color:var(--textG);font-size:12px;><i class=fas fa-image style=font-size:24px;display:block;margin-bottom:6px;></i>Image load nahi hui</div>'">
+                onerror="this.parentNode.innerHTML='<div style=padding:16px;text-align:center;color:var(--textG);font-size:12px;><i class=fas fa-image style=font-size:24px;display:block;margin-bottom:6px;></i>Image could not be loaded</div>'">
         </div>` : '<div style="margin-bottom:12px;padding:12px;background:var(--surfaceL);border-radius:var(--radius-sm);text-align:center;color:var(--textG);font-size:12px;"><i class="fas fa-qrcode" style="display:block;font-size:20px;margin-bottom:4px;"></i>No QR / Image attached</div>';
     document.getElementById('txn-modal-body').innerHTML = `
         ${imgHtml}
         <div class="label-row"><span class="label-key">User</span><span class="label-val">${wd.userName||'—'}</span></div>
-        <div class="label-row"><span class="label-key">Amount</span><span class="label-val" style="color:var(--danger);font-size:16px;">₹${(wd.amount||0).toLocaleString()}</span></div>
+        <div class="label-row"><span class="label-key">Amount</span><span class="label-val" style="color:var(--danger);font-size:16px;">${mny(wd.amount||0)}</span></div>
         <div class="label-row"><span class="label-key">Status</span><span class="label-val"><span class="badge ${st==='approved'?'b-green':st==='rejected'?'b-red':'b-yellow'}">${st}</span></span></div>
         <div class="label-row"><span class="label-key">UPI ID</span><span class="label-val" style="color:${upiVal?'var(--info)':'var(--textG)'};">${upiVal||'—'}</span></div>
         <div class="label-row"><span class="label-key">Account</span><span class="label-val">${wd.account||wd.accountNumber||wd.bankAccount||'—'}</span></div>
@@ -2352,7 +2459,7 @@ function loadTransfers() {
                             <div style="font-weight:700;font-size:14px;">${userName}</div>
                             ${userPhone ? `<div style="color:var(--textG);font-size:11px;">${userPhone}</div>` : ''}
                         </div>
-                        <span style="font-weight:700;color:#2196f3;flex-shrink:0;">₹${(d.amount||0).toLocaleString()}</span>
+                        <span style="font-weight:700;color:#2196f3;flex-shrink:0;">${mny(d.amount||0)}</span>
                     </div>
                     <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--textG);">
                         <span class="badge b-blue" style="font-size:10px;">${d.fromWallet||'Spot'}</span>
@@ -2369,7 +2476,7 @@ function loadTransfers() {
                     if(snap.empty) { document.getElementById('transfers-list').innerHTML = '<div class="empty-state"><i class="fas fa-exchange-alt"></i><p>No transfers found</p></div>'; return; }
                     document.getElementById('transfers-list').innerHTML = snap.docs.map(doc => {
                         const d = doc.data();
-                        return `<div class="txn-card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><span style="font-weight:700;">${d.userName||'Unknown'}</span><span style="font-weight:700;color:#2196f3;">₹${(d.amount||0).toLocaleString()}</span></div><div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--textG);"><span>${d.fromWallet||'Spot'}</span><i class="fas fa-arrow-right"></i><span>${d.toWallet||'Futures'}</span><span style="margin-left:auto;">${safeDate(d.timestamp)}</span></div></div>`;
+                        return `<div class="txn-card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><span style="font-weight:700;">${d.userName||'Unknown'}</span><span style="font-weight:700;color:#2196f3;">${mny(d.amount||0)}</span></div><div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--textG);"><span>${d.fromWallet||'Spot'}</span><i class="fas fa-arrow-right"></i><span>${d.toWallet||'Futures'}</span><span style="margin-left:auto;">${safeDate(d.timestamp)}</span></div></div>`;
                     }).join('');
                 })
                 .catch(() => { document.getElementById('transfers-list').innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle" style="color:var(--danger);"></i><p>Error loading transfers</p></div>'; });
@@ -2496,7 +2603,7 @@ function userCard(u) {
         <div style="flex:1;min-width:0;">
             <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:4px;">
                 <span style="font-weight:700;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${u.name||'Unknown'}</span>
-                <span style="font-weight:700;color:var(--primary);flex-shrink:0;">₹${total.toLocaleString()}</span>
+                <span style="font-weight:700;color:var(--primary);flex-shrink:0;">${mny(total)}</span>
             </div>
             <div style="color:var(--textG);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${u.phone||u.email||'—'}</div>
             <div style="margin-top:4px;display:flex;gap:6px;align-items:center;">
@@ -2565,7 +2672,7 @@ function renderUserProfile(user) {
             </div>
             <!-- Total Balance Pill -->
             <div style="margin-top:14px;display:inline-block;background:var(--primary-dim);border:1px solid var(--primary);border-radius:24px;padding:6px 20px;">
-                <span style="color:var(--primary);font-weight:700;font-size:18px;">₹${total.toLocaleString()}</span>
+                <span style="color:var(--primary);font-weight:700;font-size:18px;">${mny(total)}</span>
                 <span style="color:var(--textG);font-size:11px;margin-left:6px;">Total Balance</span>
             </div>
         </div>
@@ -2606,11 +2713,11 @@ function renderUserProfile(user) {
             <div class="label-row">
                 <span class="label-key" style="text-transform:capitalize;">${w}</span>
                 <div style="display:flex;align-items:center;gap:8px;">
-                    <span class="label-val" style="color:var(--primary);" id="bal-display-${w}">₹${(user[w+'Balance']||0).toLocaleString()}</span>
+                    <span class="label-val" style="color:var(--primary);" id="bal-display-${w}">${mny(user[w+'Balance']||0)}</span>
                     <button onclick="startBalanceEdit('${w}Balance','${user.id}',${user[w+'Balance']||0})" class="btn btn-s" style="padding:4px 8px;font-size:11px;"><i class="fas fa-pen"></i></button>
                 </div>
             </div>`).join('')}
-            <div class="label-row" style="border-top:2px solid var(--border);margin-top:8px;"><span class="label-key" style="font-weight:700;">Total</span><span class="label-val" style="color:var(--primary);font-size:18px;font-weight:700;">₹${total.toLocaleString()}</span></div>
+            <div class="label-row" style="border-top:2px solid var(--border);margin-top:8px;"><span class="label-key" style="font-weight:700;">Total</span><span class="label-val" style="color:var(--primary);font-size:18px;font-weight:700;">${mny(total)}</span></div>
             <div style="margin-top:16px;">
                 <button onclick="openBalanceModal('${user.id}')" class="btn btn-p" style="width:100%;"><i class="fas fa-coins"></i> Adjust Balance</button>
             </div>
@@ -2689,8 +2796,8 @@ function loadUserTxnTab(type, uid) {
                 const st = item.status || 'pending';
                 const stClass = st==='approved'?'b-green':st==='rejected'?'b-red':'b-yellow';
                 const amt = type==='deposits'
-                    ? (item.amount ? '₹'+item.amount.toLocaleString() : (item.usdtAmount ? item.usdtAmount+' USDT' : '—'))
-                    : '₹'+(item.amount||0).toLocaleString();
+                    ? (item.amount ? mny(item.amount) : (item.usdtAmount ? mnyUSDT(item.usdtAmount) : '—'))
+                    : mny(item.amount||0);
                 const amtColor = type==='deposits' ? 'var(--primary)' : 'var(--danger)';
                 const extraInfo = type==='deposits'
                     ? `${item.type||''} ${item.utrId?'· UTR: '+item.utrId:''}`
@@ -2718,7 +2825,7 @@ function loadUserTxnTab(type, uid) {
                 .then(snap => {
                     const myDocs = snap.docs.filter(d=>d.data().uid===uid).map(d=>({...d.data(),id:d.id}));
                     if(!myDocs.length){ container.innerHTML=`<div class="empty-state"><i class="fas fa-inbox"></i><p>No ${type} found</p></div>`; return; }
-                    container.innerHTML = myDocs.slice(0,30).map(item=>{const st=item.status||'pending';const stClass=st==='approved'?'b-green':st==='rejected'?'b-red':'b-yellow';const amt=type==='deposits'?(item.amount?'₹'+item.amount.toLocaleString():(item.usdtAmount?item.usdtAmount+' USDT':'—')):'₹'+(item.amount||0).toLocaleString();const amtColor=type==='deposits'?'var(--primary)':'var(--danger)';return `<div class="txn-card ${st}"><div style="display:flex;justify-content:space-between;"><span style="font-weight:700;color:${amtColor};">${amt}</span><span class="badge ${stClass}">${st}</span></div><div style="color:var(--textG);font-size:11px;">${safeDate(item.timestamp)}</div></div>`;}).join('');
+                    container.innerHTML = myDocs.slice(0,30).map(item=>{const st=item.status||'pending';const stClass=st==='approved'?'b-green':st==='rejected'?'b-red':'b-yellow';const amt=type==='deposits'?(item.amount?mny(item.amount):(item.usdtAmount?mnyUSDT(item.usdtAmount):'—')):mny(item.amount||0);const amtColor=type==='deposits'?'var(--primary)':'var(--danger)';return `<div class="txn-card ${st}"><div style="display:flex;justify-content:space-between;"><span style="font-weight:700;color:${amtColor};">${amt}</span><span class="badge ${stClass}">${st}</span></div><div style="color:var(--textG);font-size:11px;">${safeDate(item.timestamp)}</div></div>`;}).join('');
                 })
                 .catch(() => { container.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle" style="color:var(--danger);"></i><p>Error loading transactions</p></div>'; });
         });
@@ -2751,12 +2858,12 @@ function loadUserInvestments(uid) {
                         <span class="badge ${stClass}">${st}</span>
                     </div>
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;">
-                        <div><div style="color:var(--textG);font-size:10px;">Amount</div><div style="font-weight:700;color:var(--primary);font-size:15px;">₹${amt.toLocaleString()}</div></div>
+                        <div><div style="color:var(--textG);font-size:10px;">Amount</div><div style="font-weight:700;color:var(--primary);font-size:15px;">${mny(amt)}</div></div>
                         <div><div style="color:var(--textG);font-size:10px;">Return Rate</div><div style="font-weight:700;color:var(--warning);">${maxR>minR ? minR+'%–'+maxR+'%' : minR+'%'}</div></div>
                         <div><div style="color:var(--textG);font-size:10px;">Duration</div><div style="font-weight:700;">${d.duration||0} days</div></div>
                         <div><div style="color:var(--textG);font-size:10px;">Days Left</div><div style="font-weight:700;color:${typeof daysLeft==='number'&&daysLeft<=3?'var(--danger)':'var(--text)'};">${daysLeft}${typeof daysLeft==='number'?' days':''}</div></div>
                         <div><div style="color:var(--textG);font-size:10px;">Started</div><div style="font-weight:600;font-size:11px;">${d.purchaseDate||safeDate(d.createdAt)}</div></div>
-                        <div><div style="color:var(--textG);font-size:10px;">Returned</div><div style="font-weight:700;color:var(--primary);">₹${(d.totalReturned||0).toLocaleString()}</div></div>
+                        <div><div style="color:var(--textG);font-size:10px;">Returned</div><div style="font-weight:700;color:var(--primary);">${mny(d.totalReturned||0)}</div></div>
                     </div>
                     ${st==='active'?`<div class="progress" style="margin-top:4px;"><div class="progress-fill" style="width:${progress}%;"></div></div><div style="text-align:right;font-size:10px;color:var(--textG);margin-top:2px;">${progress}% complete</div>`:''}
                 </div>`;
@@ -2765,11 +2872,11 @@ function loadUserInvestments(uid) {
                 <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;">
                     <div class="stat-card" style="text-align:center;padding:12px;">
                         <div style="color:var(--textG);font-size:10px;">Total Invested</div>
-                        <div style="font-weight:700;color:var(--primary);font-size:16px;">₹${totalInvested.toLocaleString()}</div>
+                        <div style="font-weight:700;color:var(--primary);font-size:16px;">${mny(totalInvested)}</div>
                     </div>
                     <div class="stat-card" style="text-align:center;padding:12px;">
                         <div style="color:var(--textG);font-size:10px;">Total Returned</div>
-                        <div style="font-weight:700;color:var(--warning);font-size:16px;">₹${totalReturned.toLocaleString()}</div>
+                        <div style="font-weight:700;color:var(--warning);font-size:16px;">${mny(totalReturned)}</div>
                     </div>
                     <div class="stat-card" style="text-align:center;padding:12px;">
                         <div style="color:var(--textG);font-size:10px;">Active</div>
@@ -2782,7 +2889,7 @@ function loadUserInvestments(uid) {
                 .then(snap => {
                     const myDocs = snap.docs.filter(d=>d.data().uid===uid||d.data().userId===uid);
                     if(!myDocs.length){ container.innerHTML = '<div class="empty-state"><i class="fas fa-chart-line"></i><p>No investments found</p></div>'; return; }
-                    container.innerHTML = myDocs.map(doc=>{const d=doc.data();return `<div class="card" style="margin-bottom:10px;"><div style="font-weight:700;">${d.planName||'Investment'}</div><div style="color:var(--primary);font-weight:700;">₹${(d.amount||0).toLocaleString()}</div><div style="color:var(--textG);font-size:11px;">${d.status||'active'} · ${d.duration||0}d</div></div>`;}).join('');
+                    container.innerHTML = myDocs.map(doc=>{const d=doc.data();return `<div class="card" style="margin-bottom:10px;"><div style="font-weight:700;">${d.planName||'Investment'}</div><div style="color:var(--primary);font-weight:700;">${mny(d.amount||0)}</div><div style="color:var(--textG);font-size:11px;">${d.status||'active'} · ${d.duration||0}d</div></div>`;}).join('');
                 }).catch(()=>{ container.innerHTML='<div class="empty-state"><i class="fas fa-exclamation-triangle" style="color:var(--danger);"></i><p>Error loading investments</p></div>'; });
         });
 }
@@ -2826,8 +2933,8 @@ function saveBalanceEdit(walletKey, uid, w) {
     if (isNaN(val)) { showToast('Invalid amount', 'err'); return; }
     db.collection(COLLECTIONS.USERS).doc(uid).update({ [walletKey]: val })
         .then(() => {
-            showToast(`${walletKey} set to ₹${val.toLocaleString()} ✓`);
-            logAdminAction('set_balance', `Set ${walletKey}=₹${val} for ${uid}`);
+            showToast(`${walletKey} set to ${mny(val)} ✓`);
+            logAdminAction('set_balance', `Set ${walletKey}=${mnyOne(val)} for ${uid}`);
             db.collection(COLLECTIONS.USERS).doc(uid).get().then(d => { const u={...d.data(),id:d.id}; window._currentProfileUser=u; renderUserProfile(u); setTimeout(()=>showProfileTab('balance'),50); });
         })
         .catch(e => showToast(e.message,'err'));
@@ -2875,7 +2982,7 @@ function doBalanceAdjust() {
     if (isNaN(amount) || !reason) { showToast('Fill all fields', 'err'); return; }
     db.collection(COLLECTIONS.USERS).doc(uid).update({ [wallet]: firebase.firestore.FieldValue.increment(amount) })
         .then(() => {
-            showToast(`Balance adjusted by ₹${amount} ✓`);
+            showToast(`Balance adjusted by ${mny(amount)} ✓`);
             logAdminAction('adjust_balance', `Adjusted ${wallet} by ${amount} for ${uid}: ${reason}`);
             closeModal('balance-modal');
             openUserProfile(uid);
@@ -2944,7 +3051,7 @@ function loadNotSubmittedKYC(btn) {
             });
             const allDocs = [...new Map([...unverified.docs, ...nullKyc.docs, ...noKycUsers].map(d => [d.id, d])).values()];
             if(!allDocs.length) { 
-                document.getElementById('kyc-list').innerHTML = '<div class="empty-state"><i class="fas fa-check-circle" style="color:var(--primary);"></i><p>Sabhi users ne KYC submit ki hai!</p></div>'; 
+                document.getElementById('kyc-list').innerHTML = '<div class="empty-state"><i class="fas fa-check-circle" style="color:var(--primary);"></i><p>Every user has already submitted KYC!</p></div>'; 
                 return; 
             }
             document.getElementById('kyc-list').innerHTML = allDocs.map(doc => {
@@ -3096,7 +3203,7 @@ function loadReports(filter = 'open', btn = null) {
             const attachVideo = d.videoUrl || d.video || '';
             const attachHtml = attachImg
                 ? `<div style="margin:10px 0;cursor:pointer;" onclick="viewImage('${attachImg}')">
-                    <img src="${attachImg}" style="width:100%;max-height:180px;object-fit:cover;border-radius:var(--radius-sm);border:1px solid var(--border);" loading="lazy" onerror="this.parentNode.innerHTML='<div style=padding:10px;text-align:center;color:var(--textG);font-size:12px;><i class=fas fa-image style=font-size:20px;display:block;margin-bottom:4px;></i>Image load nahi hui</div>'">
+                    <img src="${attachImg}" style="width:100%;max-height:180px;object-fit:cover;border-radius:var(--radius-sm);border:1px solid var(--border);" loading="lazy" onerror="this.parentNode.innerHTML='<div style=padding:10px;text-align:center;color:var(--textG);font-size:12px;><i class=fas fa-image style=font-size:20px;display:block;margin-bottom:4px;></i>Image could not be loaded</div>'">
                     <div style="color:var(--textG);font-size:10px;margin-top:4px;"><i class="fas fa-image" style="margin-right:4px;color:var(--info);"></i>Attached Image — tap to expand</div>
                   </div>`
                 : attachVideo
@@ -3403,7 +3510,7 @@ function saveInstrument() {
     const sym = document.getElementById('fx-inst-symbol').value.trim().toUpperCase().replace(/\s+/g, '');
     const name = document.getElementById('fx-inst-name').value.trim();
     const tv = document.getElementById('fx-inst-tv').value.trim();
-    if (!sym || !name || !tv) { showToast('Symbol, Name aur TradingView Symbol zaroori hain', 'err'); return; }
+    if (!sym || !name || !tv) { showToast('Symbol, Name and TradingView Symbol are required', 'err'); return; }
     const cat = document.getElementById('fx-inst-category').value;
     const id = document.getElementById('fx-inst-id').value || sym;
     const data = {
@@ -3620,7 +3727,7 @@ function loadInvestPlans() {
                             <span style="font-size:18px;font-weight:700;color:var(--warning);line-height:1;">${d.maxReturnRate||15}%</span>
                         </div>
                         <div style="font-size:10px;color:var(--textG);margin-bottom:6px;">return · ${d.duration||0} days</div>
-                        <div style="font-size:11px;color:var(--textG);">₹${(d.min||0).toLocaleString()}–₹${(d.max||0).toLocaleString()}</div>
+                        <div style="font-size:11px;color:var(--textG);">${mny(d.min)}–${mny(d.max)}</div>
                         <div style="margin-top:6px;"><span class="badge" style="background:${catColor}22;color:${catColor};font-size:10px;"><i class="fas ${catIcon}" style="font-size:9px;"></i> ${catLabel}</span></div>
                     </div>
                 </div>`;
@@ -3641,7 +3748,7 @@ function loadActiveInvestments() {
             return `<div class="card" style="margin-bottom:8px;">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
                     <span style="font-weight:700;">${d.userName||'Unknown'}</span>
-                    <span style="font-weight:700;color:var(--primary);">₹${(d.amount||0).toLocaleString()}</span>
+                    <span style="font-weight:700;color:var(--primary);">${mny(d.amount||0)}</span>
                 </div>
                 <div style="color:var(--textG);font-size:12px;">${d.planName||'—'} · ${d.minReturnRate ? d.minReturnRate+'%-'+d.maxReturnRate+'%' : (d.returnPct||0)+'%'} return · ${d.duration||0}d</div>
                 ${typeof daysLeft==='number'?`<div style="color:var(--warning);font-size:11px;margin-top:2px;"><i class="fas fa-clock"></i> ${daysLeft} days left</div>`:''}
@@ -3800,8 +3907,8 @@ function loadAnalytics(days = 7, btn = null) {
 
         const totalDep = depDocs.reduce((s,d) => s+(d.amount||(d.usdtAmount*83)||0),0);
         const totalWd = wdDocs.reduce((s,d) => s+(d.amount||0),0);
-        document.getElementById('analytics-total-dep').textContent = '₹'+totalDep.toLocaleString('en-IN');
-        document.getElementById('analytics-total-wd').textContent = '₹'+totalWd.toLocaleString('en-IN');
+        document.getElementById('analytics-total-dep').textContent = mny(totalDep);
+        document.getElementById('analytics-total-wd').textContent = mny(totalWd);
         document.getElementById('analytics-new-users').textContent = userDocs.length;
         document.getElementById('analytics-kyc-verified').textContent = kycs.docs ? kycs.docs.length : 0;
 
@@ -3829,7 +3936,7 @@ function renderBarChart(deps, days) {
     const max = Math.max(...vals, 1);
     document.getElementById('deposits-chart').innerHTML = Object.entries(buckets).map(([k,v]) => `
         <div class="bar-wrap">
-            <div class="bar" style="height:${Math.max((v/max)*100,2)}%" title="₹${v.toLocaleString()}"></div>
+            <div class="bar" style="height:${Math.max((v/max)*100,2)}%" title="${mny(v)}"></div>
             <div class="bar-label">${k.split(' ')[0]}</div>
         </div>`).join('');
 }
@@ -3871,7 +3978,7 @@ function renderTopUsers(deps) {
         <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(43,49,57,.4);">
             <div style="width:24px;height:24px;border-radius:50%;background:var(--primary-dim);color:var(--primary);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;flex-shrink:0;">${i+1}</div>
             <div style="flex:1;"><div style="font-weight:600;font-size:13px;">${u.name}</div><div style="color:var(--textG);font-size:11px;">${u.count} deposits</div></div>
-            <div style="font-weight:700;color:var(--primary);">₹${u.total.toLocaleString()}</div>
+            <div style="font-weight:700;color:var(--primary);">${mny(u.total)}</div>
         </div>`).join('') : '<div style="text-align:center;padding:20px;color:var(--textG);">No data</div>';
 }
 
@@ -3973,7 +4080,8 @@ function markAllNotifRead() {
 // ═══════════════════════════════════════════════════
 function loadSettings() {
     db.collection(COLLECTIONS.ADMIN_CONFIG).doc('config').get()
-        .then(doc => { if (doc.exists) { const d = doc.data(); document.getElementById('setting-upi').value = d.upi||''; document.getElementById('setting-usdt').value = d.usdtAddress||''; } })
+        .then(doc => { if (doc.exists) { const d = doc.data(); document.getElementById('setting-upi').value = d.upi||''; document.getElementById('setting-usdt').value = d.usdtAddress||'';
+                if (Number(d.usdtToInr) > 0) { setAdmRate(Number(d.usdtToInr)); document.getElementById('setting-usdtrate').value = d.usdtToInr; } else { document.getElementById('setting-usdtrate').value = admRate; } } })
         .catch(()=>{});
     db.collection(COLLECTIONS.WEBSITE_CONFIG).doc('config').get()
         .then(doc => {
@@ -3986,14 +4094,17 @@ function loadSettings() {
                 if (d.depositsEnabled !== undefined) document.getElementById('toggle-deposits').checked = d.depositsEnabled;
                 if (d.withdrawalsEnabled !== undefined) document.getElementById('toggle-withdrawals').checked = d.withdrawalsEnabled;
                 if (d.kycRequired !== undefined) document.getElementById('toggle-kyc').checked = d.kycRequired;
+                if (d.tradingEnabled !== undefined) document.getElementById('toggle-trading').checked = d.tradingEnabled;
             }
         })
         .catch(()=>{});
 }
 
 function savePaymentSettings() {
-    db.collection(COLLECTIONS.ADMIN_CONFIG).doc('config').set({ upi: document.getElementById('setting-upi').value.trim(), usdtAddress: document.getElementById('setting-usdt').value.trim() }, { merge: true })
-        .then(() => { showToast('Payment settings saved ✓'); logAdminAction('update_payment_settings','Updated payment settings'); })
+    const rate = Number(document.getElementById('setting-usdtrate').value);
+    if (!(rate > 0)) { showToast('Enter a valid USDT / INR rate', 'err'); return; }
+    db.collection(COLLECTIONS.ADMIN_CONFIG).doc('config').set({ upi: document.getElementById('setting-upi').value.trim(), usdtAddress: document.getElementById('setting-usdt').value.trim(), usdtToInr: rate }, { merge: true })
+        .then(() => { setAdmRate(rate); showToast('Payment settings saved ✓'); logAdminAction('update_payment_settings','Updated payment settings (rate ₹'+rate+')'); })
         .catch(e => showToast(e.message,'err'));
 }
 
@@ -4013,22 +4124,23 @@ function saveWebsiteSettings() {
         .catch(e => showToast(e.message,'err'));
 }
 
+const TOGGLE_LABELS = { registrationEnabled:'Registration', depositsEnabled:'Deposits', withdrawalsEnabled:'Withdrawals', kycRequired:'KYC', tradingEnabled:'Trading' };
 function savePlatformToggle(key, val) {
     db.collection(COLLECTIONS.WEBSITE_CONFIG).doc('config').set({ [key]:val }, { merge:true })
-        .then(() => showToast(`${key}: ${val ? 'Enabled' : 'Disabled'}`))
+        .then(() => { showToast(`${TOGGLE_LABELS[key]||key}: ${val ? 'Enabled' : 'Disabled'}`); logAdminAction('platform_toggle', `${TOGGLE_LABELS[key]||key} ${val?'enabled':'disabled'}`); })
         .catch(e => showToast(e.message,'err'));
 }
 
 function distributeProfits() {
     const amount = parseFloat(document.getElementById('profit-amount').value);
     if (!amount || amount <= 0) { showToast('Enter valid amount', 'err'); return; }
-    showConfirm('Distribute Profits', `Add ₹${amount} to all active investors?`, 'success', () => {
+    showConfirm('Distribute Profits', `Add ${mny(amount)} to all active investors?`, 'success', () => {
         db.collection(COLLECTIONS.INVESTMENTS).where('status','==','active').get()
             .then(snap => {
                 if (snap.empty) { showToast('No active investments'); return; }
                 const batch = db.batch();
                 snap.forEach(doc => { batch.update(db.collection(COLLECTIONS.USERS).doc(doc.data().uid), { investBalance: firebase.firestore.FieldValue.increment(amount) }); });
-                return batch.commit().then(() => { showToast(`₹${amount} distributed to ${snap.size} investors ✓`); logAdminAction('distribute_profits',`₹${amount} to ${snap.size} users`); document.getElementById('profit-amount').value = ''; });
+                return batch.commit().then(() => { showToast(`${mny(amount)} distributed to ${snap.size} investors ✓`); logAdminAction('distribute_profits',`${mnyOne(amount)} to ${snap.size} users`); document.getElementById('profit-amount').value = ''; });
             })
             .catch(e => showToast(e.message,'err'));
     });
@@ -4039,9 +4151,11 @@ function confirmPanicMode() {
         savePlatformToggle('depositsEnabled', false);
         savePlatformToggle('withdrawalsEnabled', false);
         savePlatformToggle('registrationEnabled', false);
+        savePlatformToggle('tradingEnabled', false);
         document.getElementById('toggle-deposits').checked = false;
         document.getElementById('toggle-withdrawals').checked = false;
         document.getElementById('toggle-registration').checked = false;
+        const tT = document.getElementById('toggle-trading'); if (tT) tT.checked = false;
         showToast('⚠️ PANIC MODE ACTIVATED – All transactions stopped', 'err');
         logAdminAction('panic_mode','PANIC MODE activated');
     });
@@ -4093,13 +4207,13 @@ function globalSearch(val) {
                         <div style="color:var(--textG);font-size:11px;">${r.email||r.phone||'—'}</div>
                     </div>
                     <div style="text-align:right;flex-shrink:0;">
-                        <div style="font-weight:700;font-size:12px;color:var(--primary);">₹${total.toLocaleString()}</div>
+                        <div style="font-weight:700;font-size:12px;color:var(--primary);">${mny(total)}</div>
                         <span class="badge ${r.kycStatus==='verified'?'b-green':'b-yellow'}" style="font-size:9px;">${r.kycStatus||'—'}</span>
                     </div>
                 </div>`; }
                 return `<div style="padding:10px;cursor:pointer;border-radius:6px;display:flex;align-items:center;gap:10px;" onclick="openDepositDetail('${r.id}');document.getElementById('global-search-results').style.display='none';" onmouseover="this.style.background='var(--surfaceL)'" onmouseout="this.style.background=''">
                     <div style="width:36px;height:36px;border-radius:50%;background:var(--warning-dim);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fas fa-arrow-down" style="color:var(--warning);font-size:13px;"></i></div>
-                    <div><div style="font-weight:600;font-size:13px;">${r.userName||'—'}</div><div style="color:var(--textG);font-size:11px;">₹${r.amount||0} · ${r.status||'pending'}</div></div>
+                    <div><div style="font-weight:600;font-size:13px;">${r.userName||'—'}</div><div style="color:var(--textG);font-size:11px;">${mnyOne(r.amount||0)} · ${r.status||'pending'}</div></div>
                 </div>`;
             }).join('');
         } catch(e) { resultsEl.innerHTML = '<div style="padding:12px;color:var(--danger);font-size:13px;">Search error</div>'; }
