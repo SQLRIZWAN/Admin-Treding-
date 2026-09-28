@@ -778,7 +778,7 @@ select.inp:focus{box-shadow:0 0 0 3px rgba(0,200,83,.15);}
 
                     <div class="card" style="margin-bottom:12px;">
                         <div style="font-weight:700;font-size:14px;margin-bottom:6px;color:var(--info);"><i class="fas fa-layer-group mr-2"></i>Leverage</div>
-                        <div style="color:var(--textG);font-size:12px;margin-bottom:14px;">Max 100000 likhne par "Unlimited" maana jayega. User ko sirf neeche diye gaye options dikhte hain.</div>
+                        <div style="color:var(--textG);font-size:12px;margin-bottom:14px;">Default <b>2000x</b>. Max 100000 likhne par "Unlimited" maana jayega. User ko sirf neeche diye gaye options dikhte hain.</div>
                         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px;">
                             <div>
                                 <label style="color:var(--textG);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:6px;">Min</label>
@@ -786,21 +786,22 @@ select.inp:focus{box-shadow:0 0 0 3px rgba(0,200,83,.15);}
                             </div>
                             <div>
                                 <label style="color:var(--textG);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:6px;">Max</label>
-                                <input type="number" class="inp" id="fx-lev-max" min="1" value="1000">
+                                <input type="number" class="inp" id="fx-lev-max" min="1" value="100000">
                             </div>
                             <div>
                                 <label style="color:var(--textG);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:6px;">Default</label>
-                                <input type="number" class="inp" id="fx-lev-default" min="1" value="10">
+                                <input type="number" class="inp" id="fx-lev-default" min="1" value="2000">
                             </div>
                         </div>
                         <div style="margin-bottom:10px;">
                             <label style="color:var(--textG);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:6px;">Leverage Options (comma separated)</label>
-                            <input type="text" class="inp" id="fx-lev-options" value="1,2,3,5,10,20,30,50,100,200,500,1000" placeholder="1,5,10,50,100">
+                            <input type="text" class="inp" id="fx-lev-options" value="1,2,3,5,10,20,50,100,200,500,1000,2000,5000" placeholder="1,5,10,50,100">
                         </div>
                         <div style="display:flex;gap:8px;flex-wrap:wrap;">
                             <button class="btn btn-s" style="font-size:12px;padding:7px 12px;" onclick="setLeveragePreset('1,2,3,5,10,20,50,100',100)">Preset 1–100x</button>
                             <button class="btn btn-s" style="font-size:12px;padding:7px 12px;" onclick="setLeveragePreset('1,2,5,10,20,50,100,200,500',500)">Preset 1–500x</button>
                             <button class="btn btn-s" style="font-size:12px;padding:7px 12px;" onclick="setLeveragePreset('1,5,10,25,50,100,200,500,1000,5000,10000',10000)">Preset 1–10000x</button>
+                            <button class="btn btn-s" style="font-size:12px;padding:7px 12px;" onclick="setLeveragePreset('1,2,3,5,10,20,50,100,200,500,1000,2000,5000',100000)">Preset 1-5000x (Default)</button>
                             <button class="btn btn-s" style="font-size:12px;padding:7px 12px;" onclick="setLeveragePreset('1,2,5,10,25,50,100,250,500,1000,10000,100000',100000)">Unlimited</button>
                         </div>
                     </div>
@@ -3108,7 +3109,7 @@ function loadReports(filter = 'open', btn = null) {
                 <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
                     <div>
                         <div style="font-weight:700;">${d.userName||'Unknown'}</div>
-                        <div style="color:var(--textG);font-size:12px;">${d.userEmail||d.userPhone||'—'}</div>
+                        <div style="color:var(--textG);font-size:12px;">${d.contact||d.userEmail||d.userPhone||'—'}${d.guest?' <span class="badge b-yellow" style="font-size:10px;">guest</span>':''}</div>
                         ${d.uid ? `<div style="font-size:10px;color:var(--textG);font-family:monospace;">${d.uid.substring(0,14)}...</div>` : ''}
                     </div>
                     <span class="badge ${d.status==='open'?'b-yellow':'b-green'}">${d.status||'—'}</span>
@@ -3221,8 +3222,8 @@ const FX_DEFAULT_INSTRUMENTS = [
 const FX_DEFAULT_CONFIG = {
     forexEnabled: true, cfdEnabled: true, oneClickTrading: true,
     brokerFeeOpenPct: 0.02, brokerFeeClosePct: 0.02,
-    defaultLeverage: 10, minLeverage: 1, maxLeverage: 1000,
-    leverageOptions: [1,2,3,5,10,20,30,50,100,200,500,1000],
+    defaultLeverage: 2000, minLeverage: 1, maxLeverage: 100000,
+    leverageOptions: [1,2,3,5,10,20,50,100,200,500,1000,2000,5000],
     maintenanceMarginPct: 50, minDepositUSDT: 10,
     minLot: 0.01, maxLot: 100, lotStep: 0.01,
     defaultSpreadPips: 0, orderTypes: { market:true, limit:true, stop:true },
@@ -3249,8 +3250,8 @@ function loadForexAdmin() {
             document.getElementById('fx-fee-open').value = d.brokerFeeOpenPct;
             document.getElementById('fx-fee-close').value = d.brokerFeeClosePct;
             document.getElementById('fx-lev-min').value = d.minLeverage || 1;
-            document.getElementById('fx-lev-max').value = d.maxLeverage || 1000;
-            document.getElementById('fx-lev-default').value = d.defaultLeverage || 10;
+            document.getElementById('fx-lev-max').value = d.maxLeverage || 100000;
+            document.getElementById('fx-lev-default').value = d.defaultLeverage || 2000;
             document.getElementById('fx-lev-options').value = (d.leverageOptions || FX_DEFAULT_CONFIG.leverageOptions).join(',');
             document.getElementById('fx-min-lot').value = d.minLot;
             document.getElementById('fx-max-lot').value = d.maxLot;
@@ -3277,7 +3278,7 @@ function updateFeePreview() {
 }
 
 function collectForexConfig() {
-    const maxLev = num('fx-lev-max', 1000);
+    const maxLev = num('fx-lev-max', 100000);
     const opts = document.getElementById('fx-lev-options').value
         .split(',').map(x => parseFloat(x.trim())).filter(x => x >= 1 && isFinite(x));
     return {
@@ -3288,7 +3289,7 @@ function collectForexConfig() {
         brokerFeeClosePct: num('fx-fee-close', 0.02),
         minLeverage: num('fx-lev-min', 1),
         maxLeverage: maxLev,
-        defaultLeverage: num('fx-lev-default', 10),
+        defaultLeverage: num('fx-lev-default', 2000),
         leverageOptions: opts.length ? opts : FX_DEFAULT_CONFIG.leverageOptions,
         minLot: num('fx-min-lot', 0.01),
         maxLot: num('fx-max-lot', 100),
@@ -3325,8 +3326,9 @@ function setLeveragePreset(opts, max) {
     document.getElementById('fx-lev-max').value = max;
     document.getElementById('fx-lev-min').value = 1;
     const arr = opts.split(',').map(x => parseFloat(x));
-    if (arr.indexOf(parseInt(document.getElementById('fx-lev-default').value, 10)) === -1) {
-        document.getElementById('fx-lev-default').value = arr[Math.min(4, arr.length - 1)];
+    const cur = parseInt(document.getElementById('fx-lev-default').value, 10);
+    if (arr.indexOf(cur) === -1) {
+        document.getElementById('fx-lev-default').value = arr.indexOf(2000) >= 0 ? 2000 : arr[Math.min(4, arr.length - 1)];
     }
     showToast('Leverage preset applied — Save All Settings to confirm');
 }
