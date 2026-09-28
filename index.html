@@ -213,12 +213,9 @@ tr:hover td{background:rgba(255,255,255,.02);}
 .progress{width:100%;height:4px;background:var(--border);border-radius:4px;overflow:hidden;}
 .progress-fill{height:100%;background:var(--primary);border-radius:4px;transition:width .4s ease;}
 
-/* ── NFT / PLAN GRID ── */
+/* ── PLAN GRID ── */
 .grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
 .grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;}
-.nft-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden;cursor:pointer;transition:all var(--transition);min-width:0;word-break:break-word;}
-.nft-card:hover{border-color:rgba(0,200,83,.4);transform:translateY(-2px);}
-.nft-img{width:100%;aspect-ratio:1;object-fit:cover;background:var(--surfaceL);}
 .invest-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden;cursor:pointer;transition:all var(--transition);}
 .invest-card:hover{border-color:rgba(0,200,83,.4);transform:translateY(-2px);}
 .invest-img-wrap{width:100%;aspect-ratio:16/9;position:relative;background:linear-gradient(135deg,var(--surfaceL),var(--border));display:flex;align-items:center;justify-content:center;overflow:hidden;}
@@ -306,9 +303,9 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;heigh
 
 /* ── UI POLISH ── */
 *{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}
-.card,.stat-card,.nft-card,.invest-card,.txn-card,.user-card{transition:all .25s cubic-bezier(.4,0,.2,1);}
-.card:active,.stat-card:active,.nft-card:active,.invest-card:active{transform:scale(.98);}
-.nft-card:hover,.invest-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.4);}
+.card,.stat-card,.invest-card,.txn-card,.user-card{transition:all .25s cubic-bezier(.4,0,.2,1);}
+.card:active,.stat-card:active,.invest-card:active{transform:scale(.98);}
+.invest-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.4);}
 .btn{transition:all .2s cubic-bezier(.4,0,.2,1);will-change:transform;}
 .btn:hover{filter:brightness(1.1);}
 .modal.active .modal-box{animation:slideUpSmooth .3s cubic-bezier(.16,1,.3,1);}
@@ -715,20 +712,192 @@ select.inp:focus{box-shadow:0 0 0 3px rgba(0,200,83,.15);}
             </div>
             <div style="padding:12px 16px 0;">
                 <div class="sub-tabs" style="overflow-x:auto;">
-                    <button class="st-btn active" id="tools-tab-nft" onclick="switchToolsTab('nft')" style="white-space:nowrap;">NFT</button>
+                    <button class="st-btn active" id="tools-tab-forex" onclick="switchToolsTab('forex')" style="white-space:nowrap;">Forex / CFD</button>
+                    <button class="st-btn" id="tools-tab-cfd" onclick="switchToolsTab('cfd')" style="white-space:nowrap;">CFD Monitor</button>
                     <button class="st-btn" id="tools-tab-invest" onclick="switchToolsTab('invest')" style="white-space:nowrap;">Invest Plans</button>
                     <button class="st-btn" id="tools-tab-analytics" onclick="switchToolsTab('analytics')" style="white-space:nowrap;">Analytics</button>
                     <button class="st-btn" id="tools-tab-notifications" onclick="switchToolsTab('notifications')" style="white-space:nowrap;">Broadcast</button>
                     <button class="st-btn" id="tools-tab-settings" onclick="switchToolsTab('settings')" style="white-space:nowrap;">Settings</button>
                 </div>
 
-                <!-- NFT Content -->
-                <div id="tools-nft-content">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-                        <span style="font-weight:700;">NFT Management</span>
-                        <button onclick="openNFTModal()" class="btn btn-p" style="padding:8px 14px;font-size:13px;"><i class="fas fa-plus"></i> Add NFT</button>
+                <!-- Forex / CFD Content -->
+                <div id="tools-forex-content">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+                        <span style="font-weight:700;"><i class="fas fa-globe" style="color:var(--primary);margin-right:6px;"></i>Forex / CFD Engine</span>
+                        <div style="display:flex;gap:8px;">
+                            <button onclick="loadForexAdmin()" class="btn btn-s" style="padding:8px 12px;font-size:12px;"><i class="fas fa-sync-alt"></i> Reload</button>
+                            <button onclick="saveForexConfig(true)" class="btn btn-p" style="padding:8px 14px;font-size:13px;"><i class="fas fa-save"></i> Save All Settings</button>
+                        </div>
                     </div>
-                    <div class="grid-2" id="nft-grid"></div>
+
+                    <div class="card" style="margin-bottom:12px;">
+                        <div style="font-weight:700;font-size:14px;margin-bottom:14px;color:var(--primary);"><i class="fas fa-sliders-h mr-2"></i>Master Switches</div>
+                        <div class="label-row">
+                            <div><div style="font-weight:600;">Forex Trading</div><div style="color:var(--textG);font-size:12px;">FX pairs chalu / band</div></div>
+                            <label class="toggle"><input type="checkbox" id="fx-forex-enabled" checked><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+                        </div>
+                        <div class="label-row">
+                            <div><div style="font-weight:600;">CFD Trading</div><div style="color:var(--textG);font-size:12px;">Metals / Indices / Energy / Crypto CFD</div></div>
+                            <label class="toggle"><input type="checkbox" id="fx-cfd-enabled" checked><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+                        </div>
+                        <div class="label-row">
+                            <div><div style="font-weight:600;">One-Click Order</div><div style="color:var(--textG);font-size:12px;">ON = ek tap me order. OFF = confirm screen aayegi.</div></div>
+                            <label class="toggle"><input type="checkbox" id="fx-oneclick" checked><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+                        </div>
+                        <div style="margin-top:12px;">
+                            <div style="color:var(--textG);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:8px;">Allowed Order Types</div>
+                            <div style="display:flex;gap:16px;flex-wrap:wrap;">
+                                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" id="fx-ot-market" checked> Market</label>
+                                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" id="fx-ot-limit" checked> Limit</label>
+                                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" id="fx-ot-stop" checked> Stop</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card" style="margin-bottom:12px;">
+                        <div style="font-weight:700;font-size:14px;margin-bottom:6px;color:var(--danger);"><i class="fas fa-triangle-exclamation mr-2"></i>Maintenance Notice</div>
+                        <div style="color:var(--textG);font-size:12px;margin-bottom:10px;">Khali chhodne par koi notice nahi dikhega. Text likhne par order placement band ho jayegi aur users ko yahi message dikhega.</div>
+                        <textarea class="inp" id="fx-maintenance-notice" rows="2" style="resize:none;" placeholder="e.g. CFD trading under maintenance, 30 min."></textarea>
+                    </div>
+
+                    <div class="card" style="margin-bottom:12px;">
+                        <div style="font-weight:700;font-size:14px;margin-bottom:6px;color:var(--warning);"><i class="fas fa-percentage mr-2"></i>Broker Charges (%)</div>
+                        <div style="color:var(--textG);font-size:12px;margin-bottom:14px;">Ye hi aapki kamai hai — order price bilkul chart wali live price par lagti hai, koi hidden spread nahi.</div>
+                        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;">
+                            <div>
+                                <label style="color:var(--textG);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:6px;">Open Fee (%)</label>
+                                <input type="number" class="inp" id="fx-fee-open" step="0.01" min="0" max="10" value="0.02">
+                            </div>
+                            <div>
+                                <label style="color:var(--textG);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:6px;">Close Fee (%)</label>
+                                <input type="number" class="inp" id="fx-fee-close" step="0.01" min="0" max="10" value="0.02">
+                            </div>
+                        </div>
+                        <div style="color:var(--textG);font-size:12px;margin-top:10px;" id="fx-fee-preview">—</div>
+                    </div>
+
+                    <div class="card" style="margin-bottom:12px;">
+                        <div style="font-weight:700;font-size:14px;margin-bottom:6px;color:var(--info);"><i class="fas fa-layer-group mr-2"></i>Leverage</div>
+                        <div style="color:var(--textG);font-size:12px;margin-bottom:14px;">Max 100000 likhne par "Unlimited" maana jayega. User ko sirf neeche diye gaye options dikhte hain.</div>
+                        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px;">
+                            <div>
+                                <label style="color:var(--textG);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:6px;">Min</label>
+                                <input type="number" class="inp" id="fx-lev-min" min="1" value="1">
+                            </div>
+                            <div>
+                                <label style="color:var(--textG);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:6px;">Max</label>
+                                <input type="number" class="inp" id="fx-lev-max" min="1" value="1000">
+                            </div>
+                            <div>
+                                <label style="color:var(--textG);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:6px;">Default</label>
+                                <input type="number" class="inp" id="fx-lev-default" min="1" value="10">
+                            </div>
+                        </div>
+                        <div style="margin-bottom:10px;">
+                            <label style="color:var(--textG);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:6px;">Leverage Options (comma separated)</label>
+                            <input type="text" class="inp" id="fx-lev-options" value="1,2,3,5,10,20,30,50,100,200,500,1000" placeholder="1,5,10,50,100">
+                        </div>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                            <button class="btn btn-s" style="font-size:12px;padding:7px 12px;" onclick="setLeveragePreset('1,2,3,5,10,20,50,100',100)">Preset 1–100x</button>
+                            <button class="btn btn-s" style="font-size:12px;padding:7px 12px;" onclick="setLeveragePreset('1,2,5,10,20,50,100,200,500',500)">Preset 1–500x</button>
+                            <button class="btn btn-s" style="font-size:12px;padding:7px 12px;" onclick="setLeveragePreset('1,5,10,25,50,100,200,500,1000,5000,10000',10000)">Preset 1–10000x</button>
+                            <button class="btn btn-s" style="font-size:12px;padding:7px 12px;" onclick="setLeveragePreset('1,2,5,10,25,50,100,250,500,1000,10000,100000',100000)">Unlimited</button>
+                        </div>
+                    </div>
+
+                    <div class="card" style="margin-bottom:12px;">
+                        <div style="font-weight:700;font-size:14px;margin-bottom:14px;color:var(--purple);"><i class="fas fa-balance-scale mr-2"></i>Lot / Risk</div>
+                        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;">
+                            <div>
+                                <label style="color:var(--textG);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:6px;">Min Lot</label>
+                                <input type="number" class="inp" id="fx-min-lot" step="0.01" min="0.01" value="0.01">
+                            </div>
+                            <div>
+                                <label style="color:var(--textG);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:6px;">Max Lot</label>
+                                <input type="number" class="inp" id="fx-max-lot" step="0.01" min="0.01" value="100">
+                            </div>
+                            <div>
+                                <label style="color:var(--textG);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:6px;">Lot Step</label>
+                                <input type="number" class="inp" id="fx-lot-step" step="0.01" min="0.01" value="0.01">
+                            </div>
+                            <div>
+                                <label style="color:var(--textG);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:6px;">Maintenance Margin (%)</label>
+                                <input type="number" class="inp" id="fx-maint-margin" step="1" min="1" max="99" value="50">
+                            </div>
+                            <div>
+                                <label style="color:var(--textG);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:6px;">Min CFD Deposit (USDT)</label>
+                                <input type="number" class="inp" id="fx-min-deposit" step="1" min="0" value="10">
+                            </div>
+                            <div>
+                                <label style="color:var(--textG);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:6px;">Price Refresh (ms)</label>
+                                <input type="number" class="inp" id="fx-quote-ttl" step="500" min="2000" value="4500">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card" style="margin-bottom:12px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:8px;">
+                            <span style="font-weight:700;font-size:14px;color:var(--primary);"><i class="fas fa-list mr-2"></i>Instruments (0 → Unlimited)</span>
+                            <div style="display:flex;gap:8px;">
+                                <button onclick="seedDefaultInstruments()" class="btn btn-s" style="font-size:12px;padding:7px 12px;"><i class="fas fa-rotate-left"></i> Load 25 Defaults</button>
+                                <button onclick="openInstrumentModal()" class="btn btn-p" style="padding:8px 14px;font-size:13px;"><i class="fas fa-plus"></i> Add Pair</button>
+                            </div>
+                        </div>
+                        <div style="color:var(--textG);font-size:12px;margin-bottom:12px;">
+                            TradingView <b>tvSymbol</b> wahi hona chahiye jo chart use karta hai (jaise <code>FX:EURUSD</code>, <code>OANDA:XAUUSD</code>) — tabhi order price aur chart price 100% same rahenge.
+                        </div>
+                        <div style="margin-bottom:12px;">
+                            <input type="search" class="inp" id="fx-inst-search" placeholder="Search symbol / name..." oninput="renderForexInstruments()">
+                        </div>
+                        <div id="fx-instruments-list"></div>
+                    </div>
+                </div>
+
+                <!-- CFD Monitor Content -->
+                <div id="tools-cfd-content" style="display:none;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+                        <span style="font-weight:700;">CFD Monitor</span>
+                        <button onclick="loadCfdMonitor()" class="btn btn-s" style="padding:8px 12px;font-size:12px;"><i class="fas fa-sync-alt"></i> Refresh</button>
+                    </div>
+
+                    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px;">
+                        <div class="stat-card" style="text-align:center;">
+                            <div style="color:var(--textG);font-size:11px;margin-bottom:4px;">Open Positions</div>
+                            <div style="font-size:20px;font-weight:700;color:var(--primary);" id="cfd-stat-open">—</div>
+                        </div>
+                        <div class="stat-card" style="text-align:center;">
+                            <div style="color:var(--textG);font-size:11px;margin-bottom:4px;">Broker Fees (USDT)</div>
+                            <div style="font-size:20px;font-weight:700;color:var(--warning);" id="cfd-stat-fees">—</div>
+                        </div>
+                        <div class="stat-card" style="text-align:center;">
+                            <div style="color:var(--textG);font-size:11px;margin-bottom:4px;">Closed Trades</div>
+                            <div style="font-size:20px;font-weight:700;color:var(--info);" id="cfd-stat-trades">—</div>
+                        </div>
+                        <div class="stat-card" style="text-align:center;">
+                            <div style="color:var(--textG);font-size:11px;margin-bottom:4px;">Traders (30d)</div>
+                            <div style="font-size:20px;font-weight:700;color:var(--purple);" id="cfd-stat-users">—</div>
+                        </div>
+                    </div>
+
+                    <div class="card" style="margin-bottom:12px;">
+                        <div style="font-weight:700;margin-bottom:12px;"><i class="fas fa-exclamation-triangle" style="color:var(--danger);margin-right:6px;"></i>Negative Balance Repair</div>
+                        <div style="color:var(--textG);font-size:12px;margin-bottom:12px;">Kisi ka bhi balance 0 se neeche gaya ho to use 0 par laata hai (website par bhi yehi guard hai).</div>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+                            <button onclick="scanNegativeBalances()" class="btn btn-s" style="font-size:12px;padding:8px 14px;"><i class="fas fa-magnifying-glass"></i> Scan Users</button>
+                            <button onclick="repairAllNegativeBalances()" class="btn btn-p" style="font-size:12px;padding:8px 14px;"><i class="fas fa-wrench"></i> Repair All</button>
+                        </div>
+                        <div id="fx-negative-list"></div>
+                    </div>
+
+                    <div class="card" style="margin-bottom:12px;">
+                        <div style="font-weight:700;margin-bottom:12px;"><i class="fas fa-globe" style="color:var(--primary);margin-right:6px;"></i>Open Positions</div>
+                        <div id="cfd-open-positions"></div>
+                    </div>
+
+                    <div class="card">
+                        <div style="font-weight:700;margin-bottom:12px;"><i class="fas fa-clock-rotate-left" style="color:var(--info);margin-right:6px;"></i>Recent CFD Trades</div>
+                        <div id="cfd-recent-trades"></div>
+                    </div>
                 </div>
 
                 <!-- Invest Plans Content -->
@@ -974,52 +1143,73 @@ select.inp:focus{box-shadow:0 0 0 3px rgba(0,200,83,.15);}
     </div>
 </div>
 
-<!-- NFT Modal -->
-<div class="modal" id="nft-modal">
+<!-- Forex Instrument Modal -->
+<div class="modal" id="fx-instrument-modal">
     <div class="modal-box">
         <div class="modal-handle"></div>
         <div class="modal-head">
-            <h3 id="nft-modal-title">Add NFT</h3>
-            <button onclick="closeModal('nft-modal')" class="btn btn-s btn-icon"><i class="fas fa-times"></i></button>
+            <h3 id="fx-inst-modal-title">Add Instrument</h3>
+            <button onclick="closeModal('fx-instrument-modal')" class="btn btn-s btn-icon"><i class="fas fa-times"></i></button>
         </div>
         <div class="modal-body">
-            <input type="hidden" id="nft-id">
-            <div style="margin-bottom:12px;">
-                <label style="color:var(--textG);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:6px;">NFT Image</label>
-                <div class="drop-zone" id="nft-drop-zone" onclick="document.getElementById('nft-img-inp').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleNFTDrop(event)">
-                    <img id="nft-img-preview" style="max-height:120px;border-radius:8px;display:none;margin:0 auto 8px;">
-                    <div id="nft-drop-text"><i class="fas fa-cloud-upload-alt" style="font-size:24px;color:var(--textG);margin-bottom:8px;"></i><br><span style="color:var(--textG);font-size:13px;">Tap or drag image here</span></div>
-                </div>
-                <input type="file" id="nft-img-inp" accept="image/*" style="display:none" onchange="previewNFTImage(this)">
-                <div class="progress" style="margin-top:8px;display:none;" id="nft-upload-progress"><div class="progress-fill" id="nft-upload-bar"></div></div>
-            </div>
-            <div style="margin-bottom:12px;">
-                <label style="color:var(--textG);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:6px;">NFT Name</label>
-                <input type="text" class="inp" id="nft-name" placeholder="NFT Name">
-            </div>
+            <input type="hidden" id="fx-inst-id">
             <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:12px;">
                 <div>
-                    <label style="color:var(--textG);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:6px;">Price (₹)</label>
-                    <input type="number" class="inp" id="nft-price" placeholder="0">
+                    <label style="color:var(--textG);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:6px;">Symbol *</label>
+                    <input type="text" class="inp" id="fx-inst-symbol" placeholder="EURUSD" style="text-transform:uppercase;">
                 </div>
                 <div>
-                    <label style="color:var(--textG);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:6px;">Rarity</label>
-                    <select class="inp" id="nft-rarity">
-                        <option value="common">Common</option>
-                        <option value="rare">Rare</option>
-                        <option value="epic">Epic</option>
-                        <option value="legendary">Legendary</option>
+                    <label style="color:var(--textG);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:6px;">Category</label>
+                    <select class="inp" id="fx-inst-category">
+                        <option value="forex">Forex</option>
+                        <option value="metal">Metals</option>
+                        <option value="index">Indices</option>
+                        <option value="energy">Energy</option>
+                        <option value="crypto">Crypto</option>
                     </select>
                 </div>
             </div>
-            <div style="margin-bottom:16px;">
-                <label style="color:var(--textG);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:6px;">Description</label>
-                <textarea class="inp" id="nft-description" placeholder="NFT description..." rows="2" style="resize:none;"></textarea>
+            <div style="margin-bottom:12px;">
+                <label style="color:var(--textG);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:6px;">Display Name *</label>
+                <input type="text" class="inp" id="fx-inst-name" placeholder="EUR/USD">
+            </div>
+            <div style="margin-bottom:12px;">
+                <label style="color:var(--textG);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:6px;">TradingView Symbol *</label>
+                <input type="text" class="inp" id="fx-inst-tv" placeholder="FX:EURUSD">
+                <div style="color:var(--textG);font-size:11px;margin-top:6px;">Chart aur order isi symbol se price lete hain — dono same rahenge.</div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px;">
+                <div>
+                    <label style="color:var(--textG);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:6px;">Digits</label>
+                    <input type="number" class="inp" id="fx-inst-digits" min="0" max="8" value="5">
+                </div>
+                <div>
+                    <label style="color:var(--textG);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:6px;">Pip Size</label>
+                    <input type="number" class="inp" id="fx-inst-pip" step="0.000001" value="0.0001">
+                </div>
+                <div>
+                    <label style="color:var(--textG);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:6px;">Contract Size</label>
+                    <input type="number" class="inp" id="fx-inst-contract" step="1" value="100000">
+                </div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:16px;">
+                <div>
+                    <label style="color:var(--textG);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:6px;">Base</label>
+                    <input type="text" class="inp" id="fx-inst-base" placeholder="EUR">
+                </div>
+                <div>
+                    <label style="color:var(--textG);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:6px;">Quote</label>
+                    <input type="text" class="inp" id="fx-inst-quote" placeholder="USD">
+                </div>
+            </div>
+            <div class="label-row">
+                <div><div style="font-weight:600;">Enabled</div><div style="color:var(--textG);font-size:12px;">Website par dikhana / chupana</div></div>
+                <label class="toggle"><input type="checkbox" id="fx-inst-enabled" checked><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
             </div>
         </div>
         <div class="modal-foot">
-            <button onclick="closeModal('nft-modal')" class="btn btn-s" style="flex:1;">Cancel</button>
-            <button onclick="saveNFT()" class="btn btn-p" style="flex:2;" id="nft-save-btn"><i class="fas fa-save"></i> Save NFT</button>
+            <button onclick="closeModal('fx-instrument-modal')" class="btn btn-s" style="flex:1;">Cancel</button>
+            <button onclick="saveInstrument()" class="btn btn-p" style="flex:2;" id="fx-inst-save-btn"><i class="fas fa-save"></i> Save Instrument</button>
         </div>
     </div>
 </div>
@@ -1156,7 +1346,8 @@ select.inp:focus{box-shadow:0 0 0 3px rgba(0,200,83,.15);}
                     <option value="futuresBalance">Futures</option>
                     <option value="marginBalance">Margin</option>
                     <option value="investBalance">Invest</option>
-                    <option value="nftBalance">NFT</option>
+                    <option value="cfdBalance">CFD</option>
+                    <option value="referralBalance">Referral</option>
                 </select>
             </div>
             <div style="margin-bottom:12px;">
@@ -1300,14 +1491,14 @@ const firebaseConfig = {
 };
 
 const COLLECTIONS = {
-    USERS:'users', ADMIN_CONFIG:'admin', NFTS:'nfts', INVEST_PLANS:'investPlans',
+    USERS:'users', ADMIN_CONFIG:'admin', INVEST_PLANS:'investPlans',
     PAYMENTS:'payments', WITHDRAWALS:'withdrawals', TRANSFERS:'transfers',
-    USER_NFTS:'userNFTs', INVESTMENTS:'investments', NOTIFICATIONS:'notifications',
+    INVESTMENTS:'investments', NOTIFICATIONS:'notifications',
     KYC:'kyc', REPORTS:'reports', ORDERS:'orders', ADMIN_LOGS:'adminLogs',
     WEBSITE_CONFIG:'website'
 };
 
-const cloudinaryConfig = { cloudName:'debp1kjtm', uploadPreset:'sql_admin', folder:'sql_nfts' };
+const cloudinaryConfig = { cloudName:'debp1kjtm', uploadPreset:'sql_admin', folder:'sql_uploads' };
 
 try { firebase.initializeApp(firebaseConfig); } catch(e){ console.error('Firebase init:',e); }
 const auth = firebase.auth();
@@ -1324,7 +1515,7 @@ let currentPaymentTab = 'deposits';
 let currentUsersTab = 'users';
 let currentDepositStatusTab = 'pending';
 let currentWithdrawalStatusTab = 'pending';
-let currentToolsTab = 'nft';
+let currentToolsTab = 'forex';
 
 // Pagination cursors
 let depositsLastDoc = null, depositsHasMore = true;
@@ -1435,7 +1626,7 @@ function loadTabData(tab) {
     if (tab === 'home') { loadRecentActivity(); }
     else if (tab === 'payment') { loadPaymentData(); }
     else if (tab === 'allusers') { if (currentUsersTab === 'users') loadUsers(); else if (currentUsersTab === 'kyc') loadKYC(); else if (currentUsersTab === 'reports') loadReports(); else if (currentUsersTab === 'adminlogs') loadAdminLogs(); }
-    else if (tab === 'tools') { if (currentToolsTab === 'nft') loadNFTs(); else if (currentToolsTab === 'invest') loadInvestPlans(); else if (currentToolsTab === 'analytics') loadAnalytics(7); else if (currentToolsTab === 'notifications') loadNotificationsHistory(); else if (currentToolsTab === 'settings') loadSettings(); }
+    else if (tab === 'tools') { if (currentToolsTab === 'forex') loadForexAdmin(); else if (currentToolsTab === 'cfd') loadCfdMonitor(); else if (currentToolsTab === 'invest') loadInvestPlans(); else if (currentToolsTab === 'analytics') loadAnalytics(7); else if (currentToolsTab === 'notifications') loadNotificationsHistory(); else if (currentToolsTab === 'settings') loadSettings(); }
 }
 
 function switchPaymentTab(tab) {
@@ -1485,13 +1676,14 @@ function switchLogTab(tab) { switchUsersTab(tab); }
 
 function switchToolsTab(tab) {
     currentToolsTab = tab;
-    ['nft','invest','analytics','notifications','settings'].forEach(t => {
+    ['forex','cfd','invest','analytics','notifications','settings'].forEach(t => {
         const btn = document.getElementById(`tools-tab-${t}`);
         const content = document.getElementById(`tools-${t}-content`);
         if (t === tab) { btn.classList.add('active'); content.style.display = ''; }
         else { btn.classList.remove('active'); content.style.display = 'none'; }
     });
-    if (tab === 'nft') loadNFTs();
+    if (tab === 'forex') loadForexAdmin();
+    else if (tab === 'cfd') loadCfdMonitor();
     else if (tab === 'invest') { loadInvestPlans(); loadActiveInvestments(); }
     else if (tab === 'analytics') loadAnalytics(7);
     else if (tab === 'notifications') loadNotificationsHistory();
@@ -2279,10 +2471,10 @@ function renderUsers() {
     }
     // Client-side balance filter
     if (logFilters.balMin !== null && !isNaN(logFilters.balMin)) {
-        data = data.filter(u => ((u.spotBalance||0)+(u.futuresBalance||0)+(u.marginBalance||0)+(u.investBalance||0)+(u.nftBalance||0)) >= logFilters.balMin);
+        data = data.filter(u => ((u.spotBalance||0)+(u.futuresBalance||0)+(u.marginBalance||0)+(u.investBalance||0)+(u.cfdBalance||0)+(u.referralBalance||0)) >= logFilters.balMin);
     }
     if (logFilters.balMax !== null && !isNaN(logFilters.balMax)) {
-        data = data.filter(u => ((u.spotBalance||0)+(u.futuresBalance||0)+(u.marginBalance||0)+(u.investBalance||0)+(u.nftBalance||0)) <= logFilters.balMax);
+        data = data.filter(u => ((u.spotBalance||0)+(u.futuresBalance||0)+(u.marginBalance||0)+(u.investBalance||0)+(u.cfdBalance||0)+(u.referralBalance||0)) <= logFilters.balMax);
     }
     if (userSearchQuery) {
         const q = userSearchQuery.toLowerCase();
@@ -2294,7 +2486,7 @@ function renderUsers() {
 }
 
 function userCard(u) {
-    const total = (u.spotBalance||0)+(u.futuresBalance||0)+(u.marginBalance||0)+(u.investBalance||0)+(u.nftBalance||0);
+    const total = (u.spotBalance||0)+(u.futuresBalance||0)+(u.marginBalance||0)+(u.investBalance||0)+(u.cfdBalance||0)+(u.referralBalance||0);
     const kycClass = u.kycStatus === 'verified' ? 'b-green' : u.kycStatus === 'pending' ? 'b-yellow' : 'b-red';
     const initials = ((u.name||'?')[0]||'?').toUpperCase();
     const isSelected = selectedUsers.has(u.id);
@@ -2358,7 +2550,7 @@ function closeUserModal() {
 }
 
 function renderUserProfile(user) {
-    const total = (user.spotBalance||0)+(user.futuresBalance||0)+(user.marginBalance||0)+(user.investBalance||0)+(user.nftBalance||0);
+    const total = (user.spotBalance||0)+(user.futuresBalance||0)+(user.marginBalance||0)+(user.investBalance||0)+(user.cfdBalance||0)+(user.referralBalance||0);
     const initials = ((user.name||'?')[0]||'?').toUpperCase();
     document.getElementById('user-modal-body').innerHTML = `
         <!-- Hero Banner -->
@@ -2382,7 +2574,6 @@ function renderUserProfile(user) {
             <button class="pt-btn active" id="pt-profile" onclick="showProfileTab('profile')"><i class="fas fa-user" style="margin-right:4px;"></i>Profile</button>
             <button class="pt-btn" id="pt-balance" onclick="showProfileTab('balance')"><i class="fas fa-coins" style="margin-right:4px;"></i>Balance</button>
             <button class="pt-btn" id="pt-investments" onclick="showProfileTab('investments','${user.id}')"><i class="fas fa-chart-line" style="margin-right:4px;"></i>Invest</button>
-            <button class="pt-btn" id="pt-nftholdings" onclick="showProfileTab('nftholdings','${user.id}')"><i class="fas fa-gem" style="margin-right:4px;"></i>NFTs</button>
             <button class="pt-btn" id="pt-kyc" onclick="showProfileTab('kyc','${user.id}')"><i class="fas fa-id-card" style="margin-right:4px;"></i>KYC</button>
             <button class="pt-btn" id="pt-txns" onclick="showProfileTab('txns','${user.id}')"><i class="fas fa-history" style="margin-right:4px;"></i>Txns</button>
             <button class="pt-btn" id="pt-actions" onclick="showProfileTab('actions','${user.id}')"><i class="fas fa-tools" style="margin-right:4px;"></i>Actions</button>
@@ -2410,7 +2601,7 @@ function renderUserProfile(user) {
         <!-- Balance Tab -->
         <div id="profile-tab-balance" style="display:none;">
             <div style="font-weight:700;font-size:13px;color:var(--textG);margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px;">Wallet Balances</div>
-            ${['spot','futures','margin','invest','nft'].map(w => `
+            ${['spot','cfd','futures','margin','invest','referral'].map(w => `
             <div class="label-row">
                 <span class="label-key" style="text-transform:capitalize;">${w}</span>
                 <div style="display:flex;align-items:center;gap:8px;">
@@ -2428,12 +2619,6 @@ function renderUserProfile(user) {
         <div id="profile-tab-investments" style="display:none;">
             <div style="font-weight:700;font-size:13px;color:var(--textG);margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px;">Active Investments</div>
             <div id="user-investments-list"><div class="skel" style="height:80px;margin-bottom:8px;"></div></div>
-        </div>
-
-        <!-- NFT Holdings Tab -->
-        <div id="profile-tab-nftholdings" style="display:none;">
-            <div style="font-weight:700;font-size:13px;color:var(--textG);margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px;">NFT Holdings</div>
-            <div id="user-nft-holdings-list"><div class="skel" style="height:80px;margin-bottom:8px;"></div></div>
         </div>
 
         <!-- KYC Tab -->
@@ -2473,7 +2658,7 @@ function renderUserProfile(user) {
 }
 
 function showProfileTab(tab, uid) {
-    ['profile','balance','investments','nftholdings','kyc','txns','actions'].forEach(t => {
+    ['profile','balance','investments','kyc','txns','actions'].forEach(t => {
         const btn = document.getElementById(`pt-${t}`);
         const content = document.getElementById(`profile-tab-${t}`);
         if (btn) btn.classList.toggle('active', t === tab);
@@ -2481,7 +2666,6 @@ function showProfileTab(tab, uid) {
     });
     if (tab === 'kyc' && uid) loadUserKYC(uid);
     if (tab === 'investments' && uid) loadUserInvestments(uid);
-    if (tab === 'nftholdings' && uid) loadUserNFTHoldings(uid);
     if (tab === 'txns' && uid) loadUserTxnTab('deposits', uid);
 }
 
@@ -2599,50 +2783,6 @@ function loadUserInvestments(uid) {
                     if(!myDocs.length){ container.innerHTML = '<div class="empty-state"><i class="fas fa-chart-line"></i><p>No investments found</p></div>'; return; }
                     container.innerHTML = myDocs.map(doc=>{const d=doc.data();return `<div class="card" style="margin-bottom:10px;"><div style="font-weight:700;">${d.planName||'Investment'}</div><div style="color:var(--primary);font-weight:700;">₹${(d.amount||0).toLocaleString()}</div><div style="color:var(--textG);font-size:11px;">${d.status||'active'} · ${d.duration||0}d</div></div>`;}).join('');
                 }).catch(()=>{ container.innerHTML='<div class="empty-state"><i class="fas fa-exclamation-triangle" style="color:var(--danger);"></i><p>Error loading investments</p></div>'; });
-        });
-}
-
-function loadUserNFTHoldings(uid) {
-    const container = document.getElementById('user-nft-holdings-list');
-    container.innerHTML = skeletonCards(2);
-    db.collection(COLLECTIONS.USER_NFTS).where('uid','==',uid).limit(30).get()
-        .then(snap => {
-            if (snap.empty) { container.innerHTML = '<div class="empty-state"><i class="fas fa-gem"></i><p>No NFT holdings</p></div>'; return; }
-            let totalValue = 0;
-            const cards = snap.docs.map(doc => {
-                const d = doc.data();
-                const price = d.price||0;
-                totalValue += price;
-                return `<div class="nft-card">
-                    ${d.image ? `<img src="${d.image}" class="nft-img" loading="lazy" onerror="this.parentNode.innerHTML='<div class=\\"img-placeholder-wrap\\"><i class=\\"fas fa-gem\\" style=\\"font-size:24px;color:var(--purple);\\"></i></div>'">`  : `<div class="img-placeholder-wrap"><i class="fas fa-gem" style="font-size:24px;color:var(--purple);"></i></div>`}
-                    <div style="padding:10px;">
-                        <div style="font-weight:700;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${d.name||'NFT'}</div>
-                        <div style="color:var(--primary);font-size:13px;font-weight:700;margin-top:2px;">₹${price.toLocaleString()}</div>
-                        <div style="color:var(--textG);font-size:10px;margin-top:4px;"><i class="fas fa-calendar-alt" style="margin-right:3px;"></i>${d.purchaseDate||safeDate(d.purchasedAt||d.createdAt)}</div>
-                        <div style="margin-top:6px;display:flex;gap:4px;">
-                            <span class="badge b-purple" style="font-size:9px;">${(d.rarity||'common').toUpperCase()}</span>
-                            <span class="badge ${d.status==='sold'?'b-red':'b-green'}" style="font-size:9px;">${d.status||'owned'}</span>
-                        </div>
-                    </div>
-                </div>`;
-            });
-            container.innerHTML = `
-                <div style="display:flex;gap:10px;margin-bottom:14px;">
-                    <div class="stat-card" style="flex:1;text-align:center;padding:12px;">
-                        <div style="color:var(--textG);font-size:10px;">NFTs Owned</div>
-                        <div style="font-weight:700;color:var(--purple);font-size:18px;">${snap.size}</div>
-                    </div>
-                    <div class="stat-card" style="flex:1;text-align:center;padding:12px;">
-                        <div style="color:var(--textG);font-size:10px;">Total Value</div>
-                        <div style="font-weight:700;color:var(--primary);font-size:18px;">₹${totalValue.toLocaleString()}</div>
-                    </div>
-                </div>
-                <div class="grid-2">${cards.join('')}</div>`;
-        })
-        .catch(() => {
-            db.collection(COLLECTIONS.USER_NFTS).limit(50).get()
-                .then(snap=>{ const myDocs=snap.docs.filter(d=>d.data().uid===uid); if(!myDocs.length){container.innerHTML='<div class="empty-state"><i class="fas fa-gem"></i><p>No NFT holdings</p></div>';return;} container.innerHTML='<div class="grid-2">'+myDocs.map(doc=>{const d=doc.data();return `<div class="nft-card">${d.image?`<img src="${d.image}" class="nft-img">`:'<div class="img-placeholder-wrap"><i class="fas fa-gem" style="font-size:24px;color:var(--purple);"></i></div>'}<div style="padding:8px;"><div style="font-weight:700;font-size:12px;">${d.name||'NFT'}</div><div style="color:var(--primary);font-size:12px;">₹${(d.price||0).toLocaleString()}</div></div></div>`;}).join('')+'</div>';})
-                .catch(()=>{ container.innerHTML='<div class="empty-state"><i class="fas fa-exclamation-triangle" style="color:var(--danger);"></i><p>Error loading NFTs</p></div>'; });
         });
 }
 
@@ -3044,199 +3184,402 @@ function logAdminAction(action, details) {
 }
 
 // ═══════════════════════════════════════════════════
-// 🖼️ NFT MANAGEMENT
 // ═══════════════════════════════════════════════════
-function renderNFTCard(doc) {
-    const d = doc.data();
-    const rarityColors = {common:'var(--textG)',rare:'var(--info)',epic:'var(--purple)',legendary:'var(--warning)'};
-    const rarityColor = rarityColors[d.rarity||'common'] || 'var(--textG)';
-    const imgHtml = d.image
-        ? `<img src="${d.image}" class="nft-img" onerror="this.parentNode.innerHTML='<div class=\\"img-placeholder-wrap\\"><i class=\\"fas fa-image\\"></i></div>'" loading="lazy">`
-        : `<div class="img-placeholder-wrap"><i class="fas fa-image"></i></div>`;
-    return `<div class="nft-card" onclick="editNFT('${doc.id}')">
-        <div style="position:relative;">
-            ${imgHtml}
-            <div style="position:absolute;top:8px;left:8px;"><span class="badge" style="background:${rarityColor}22;color:${rarityColor};font-size:9px;text-transform:uppercase;">${d.rarity||'common'}</span></div>
-            <div style="position:absolute;top:8px;right:8px;display:flex;gap:6px;align-items:center;" onclick="event.stopPropagation()">
-                <button onclick="deleteNFT('${doc.id}','${(d.name||'').replace(/'/g,"\\'")}')" class="btn btn-d btn-icon" style="width:28px;height:28px;border-radius:50%;font-size:11px;"><i class="fas fa-trash"></i></button>
-                <label class="toggle"><input type="checkbox" ${d.active?'checked':''} onchange="toggleNFT('${doc.id}',this.checked)"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
-            </div>
-        </div>
-        <div style="padding:10px;min-width:0;overflow:hidden;">
-            <div style="font-weight:700;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;">${d.name||'Unnamed'}</div>
-            <div style="color:var(--primary);font-size:13px;font-weight:600;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">₹${(d.price||0).toLocaleString()}</div>
-            <div style="color:var(--textG);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${d.description||'No description'}</div>
-        </div>
-    </div>`;
+// 🌐 FOREX / CFD ADMIN
+// ═══════════════════════════════════════════════════
+const FX_DEFAULT_INSTRUMENTS = [
+    { symbol:'EURUSD', name:'Euro / US Dollar',       category:'forex',   digits:5, pipSize:0.0001, contractSize:100000, tvSymbol:'FX:EURUSD',      priceSource:'tv', base:'EUR', quote:'USD', enabled:true },
+    { symbol:'GBPUSD', name:'British Pound / Dollar',  category:'forex',   digits:5, pipSize:0.0001, contractSize:100000, tvSymbol:'FX:GBPUSD',      priceSource:'tv', base:'GBP', quote:'USD', enabled:true },
+    { symbol:'USDJPY', name:'US Dollar / Yen',         category:'forex',   digits:3, pipSize:0.01,   contractSize:100000, tvSymbol:'FX:USDJPY',      priceSource:'tv', base:'USD', quote:'JPY', enabled:true },
+    { symbol:'USDCHF', name:'US Dollar / Swiss Franc', category:'forex',   digits:5, pipSize:0.0001, contractSize:100000, tvSymbol:'FX:USDCHF',      priceSource:'tv', base:'USD', quote:'CHF', enabled:true },
+    { symbol:'AUDUSD', name:'Aussie / US Dollar',      category:'forex',   digits:5, pipSize:0.0001, contractSize:100000, tvSymbol:'FX:AUDUSD',      priceSource:'tv', base:'AUD', quote:'USD', enabled:true },
+    { symbol:'USDCAD', name:'US Dollar / Loonie',      category:'forex',   digits:5, pipSize:0.0001, contractSize:100000, tvSymbol:'FX:USDCAD',      priceSource:'tv', base:'USD', quote:'CAD', enabled:true },
+    { symbol:'NZDUSD', name:'Kiwi / US Dollar',        category:'forex',   digits:5, pipSize:0.0001, contractSize:100000, tvSymbol:'FX:NZDUSD',      priceSource:'tv', base:'NZD', quote:'USD', enabled:true },
+    { symbol:'EURJPY', name:'Euro / Yen',              category:'forex',   digits:3, pipSize:0.01,   contractSize:100000, tvSymbol:'FX:EURJPY',      priceSource:'tv', base:'EUR', quote:'JPY', enabled:true },
+    { symbol:'GBPJPY', name:'Pound / Yen',             category:'forex',   digits:3, pipSize:0.01,   contractSize:100000, tvSymbol:'FX:GBPJPY',      priceSource:'tv', base:'GBP', quote:'JPY', enabled:true },
+    { symbol:'EURGBP', name:'Euro / Pound',            category:'forex',   digits:5, pipSize:0.0001, contractSize:100000, tvSymbol:'FX:EURGBP',      priceSource:'tv', base:'EUR', quote:'GBP', enabled:true },
+    { symbol:'AUDJPY', name:'Aussie / Yen',            category:'forex',   digits:3, pipSize:0.01,   contractSize:100000, tvSymbol:'FX:AUDJPY',      priceSource:'tv', base:'AUD', quote:'JPY', enabled:true },
+    { symbol:'EURAUD', name:'Euro / Aussie',           category:'forex',   digits:5, pipSize:0.0001, contractSize:100000, tvSymbol:'FX:EURAUD',      priceSource:'tv', base:'EUR', quote:'AUD', enabled:true },
+    { symbol:'CADJPY', name:'Loonie / Yen',            category:'forex',   digits:3, pipSize:0.01,   contractSize:100000, tvSymbol:'FX:CADJPY',      priceSource:'tv', base:'CAD', quote:'JPY', enabled:true },
+    { symbol:'CHFJPY', name:'Swiss Franc / Yen',       category:'forex',   digits:3, pipSize:0.01,   contractSize:100000, tvSymbol:'FX:CHFJPY',      priceSource:'tv', base:'CHF', quote:'JPY', enabled:true },
+    { symbol:'EURCHF', name:'Euro / Swiss Franc',      category:'forex',   digits:5, pipSize:0.0001, contractSize:100000, tvSymbol:'FX:EURCHF',      priceSource:'tv', base:'EUR', quote:'CHF', enabled:true },
+    { symbol:'XAUUSD', name:'Gold / US Dollar',        category:'metals',  digits:2, pipSize:0.01,   contractSize:100,    tvSymbol:'OANDA:XAUUSD',   priceSource:'tv', base:'XAU', quote:'USD', enabled:true },
+    { symbol:'XAGUSD', name:'Silver / US Dollar',      category:'metals',  digits:3, pipSize:0.001,  contractSize:5000,   tvSymbol:'TVC:SILVER',     priceSource:'tv', base:'XAG', quote:'USD', enabled:true },
+    { symbol:'US30',   name:'Dow Jones 30',            category:'indices', digits:1, pipSize:0.1,    contractSize:1,       tvSymbol:'DJ:DJI',         priceSource:'tv', base:'US30', quote:'USD', enabled:true },
+    { symbol:'NAS100', name:'Nasdaq 100',              category:'indices', digits:1, pipSize:0.1,    contractSize:1,       tvSymbol:'NASDAQ:NDX',     priceSource:'tv', base:'NAS100', quote:'USD', enabled:true },
+    { symbol:'SPX500', name:'S&P 500',                 category:'indices', digits:1, pipSize:0.1,    contractSize:1,       tvSymbol:'SP:SPX',         priceSource:'tv', base:'SPX500', quote:'USD', enabled:true },
+    { symbol:'GER40',  name:'DAX 40',                  category:'indices', digits:1, pipSize:0.1,    contractSize:1,       tvSymbol:'XETR:DAX',       priceSource:'tv', base:'GER40', quote:'EUR', enabled:true },
+    { symbol:'UK100',  name:'FTSE 100',                category:'indices', digits:1, pipSize:0.1,    contractSize:1,       tvSymbol:'FTSE:UKX',       priceSource:'tv', base:'UK100', quote:'GBP', enabled:true },
+    { symbol:'BTCUSD', name:'Bitcoin / US Dollar',     category:'crypto',  digits:2, pipSize:0.01,   contractSize:1,       tvSymbol:'COINBASE:BTCUSD',priceSource:'tv', base:'BTC', quote:'USD', enabled:true },
+    { symbol:'ETHUSD', name:'Ethereum / US Dollar',    category:'crypto',  digits:2, pipSize:0.01,   contractSize:1,       tvSymbol:'COINBASE:ETHUSD',priceSource:'tv', base:'ETH', quote:'USD', enabled:true },
+    { symbol:'SOLUSD', name:'Solana / US Dollar',      category:'crypto',  digits:2, pipSize:0.01,   contractSize:1,       tvSymbol:'COINBASE:SOLUSD',priceSource:'tv', base:'SOL', quote:'USD', enabled:true },
+    { symbol:'WTI',    name:'Crude Oil WTI',           category:'energy',  digits:2, pipSize:0.01,   contractSize:1000,   tvSymbol:'NYMEX:CL1!',    priceSource:'tv', base:'WTI', quote:'USD', enabled:true },
+    { symbol:'XTI',    name:'Brent Crude',             category:'energy',  digits:2, pipSize:0.01,   contractSize:1000,   tvSymbol:'NYMEX:BZ1!',    priceSource:'tv', base:'XTI', quote:'USD', enabled:true },
+    { symbol:'NATGAS', name:'Natural Gas',             category:'energy',  digits:3, pipSize:0.001,  contractSize:10000,  tvSymbol:'NYMEX:NG1!',    priceSource:'tv', base:'NATGAS', quote:'USD', enabled:true }
+];
+
+const FX_DEFAULT_CONFIG = {
+    forexEnabled: true, cfdEnabled: true, oneClickTrading: true,
+    brokerFeeOpenPct: 0.02, brokerFeeClosePct: 0.02,
+    defaultLeverage: 10, minLeverage: 1, maxLeverage: 1000,
+    leverageOptions: [1,2,3,5,10,20,30,50,100,200,500,1000],
+    maintenanceMarginPct: 50, minDepositUSDT: 10,
+    minLot: 0.01, maxLot: 100, lotStep: 0.01,
+    defaultSpreadPips: 0, orderTypes: { market:true, limit:true, stop:true },
+    quoteTtlMs: 4500, priceSourceUrl: '', priceSourceKey: '', maintenanceNotice: ''
+};
+
+let _fxInstDocs = [];
+let _fxNegResults = [];
+const FX_BALANCE_FIELDS = ['spotBalance','cfdBalance','futuresBalance','marginBalance','investBalance','referralBalance'];
+
+function num(id, fb) { const v = parseFloat(document.getElementById(id).value); return isNaN(v) ? fb : v; }
+
+function loadForexAdmin() {
+    db.collection(COLLECTIONS.ADMIN_CONFIG).doc('forexConfig').get()
+        .then(doc => {
+            const d = doc.exists ? Object.assign({}, FX_DEFAULT_CONFIG, doc.data()) : Object.assign({}, FX_DEFAULT_CONFIG);
+            document.getElementById('fx-forex-enabled').checked = d.forexEnabled !== false;
+            document.getElementById('fx-cfd-enabled').checked = d.cfdEnabled !== false;
+            document.getElementById('fx-oneclick').checked = d.oneClickTrading !== false;
+            const ot = d.orderTypes || {};
+            document.getElementById('fx-ot-market').checked = ot.market !== false;
+            document.getElementById('fx-ot-limit').checked = ot.limit !== false;
+            document.getElementById('fx-ot-stop').checked = ot.stop !== false;
+            document.getElementById('fx-fee-open').value = d.brokerFeeOpenPct;
+            document.getElementById('fx-fee-close').value = d.brokerFeeClosePct;
+            document.getElementById('fx-lev-min').value = d.minLeverage || 1;
+            document.getElementById('fx-lev-max').value = d.maxLeverage || 1000;
+            document.getElementById('fx-lev-default').value = d.defaultLeverage || 10;
+            document.getElementById('fx-lev-options').value = (d.leverageOptions || FX_DEFAULT_CONFIG.leverageOptions).join(',');
+            document.getElementById('fx-min-lot').value = d.minLot;
+            document.getElementById('fx-max-lot').value = d.maxLot;
+            document.getElementById('fx-lot-step').value = d.lotStep;
+            document.getElementById('fx-maint-margin').value = d.maintenanceMarginPct;
+            document.getElementById('fx-min-deposit').value = d.minDepositUSDT;
+            document.getElementById('fx-quote-ttl').value = d.quoteTtlMs || 4500;
+            document.getElementById('fx-maintenance-notice').value = d.maintenanceNotice || '';
+            updateFeePreview();
+        })
+        .catch(e => showToast(e.message, 'err'));
+
+    db.collection('forexInstruments').get()
+        .then(snap => { _fxInstDocs = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderForexInstruments(); })
+        .catch(e => { _fxInstDocs = []; renderForexInstruments(); showToast(e.message, 'err'); });
 }
 
-function loadNFTs() {
-    const grid = document.getElementById('nft-grid');
-    grid.innerHTML = `<div class="skel" style="height:160px;border-radius:var(--radius-md);"></div><div class="skel" style="height:160px;border-radius:var(--radius-md);"></div>`;
-    
-    function renderNFTs(snap) {
-        if (snap.empty) { grid.innerHTML = '<div style="grid-column:span 2;text-align:center;padding:40px;color:var(--textG);"><i class="fas fa-image" style="font-size:32px;opacity:.3;display:block;margin-bottom:8px;"></i>No NFTs yet. Click Add NFT.</div>'; return; }
-        grid.innerHTML = snap.docs.map(renderNFTCard).join('');
+function updateFeePreview() {
+    const o = num('fx-fee-open', 0), c = num('fx-fee-close', 0);
+    document.getElementById('fx-fee-preview').innerHTML =
+        `1 lot (100k) ki trade par: open <b>${o}%</b> + close <b>${c}%</b> = total <b>${(o + c).toFixed(3)}%</b> aapki income. Order price chart wali live price.`;
+    const fo = document.getElementById('fx-fee-open'), fc = document.getElementById('fx-fee-close');
+    fo.oninput = updateFeePreview; fc.oninput = updateFeePreview;
+}
+
+function collectForexConfig() {
+    const maxLev = num('fx-lev-max', 1000);
+    const opts = document.getElementById('fx-lev-options').value
+        .split(',').map(x => parseFloat(x.trim())).filter(x => x >= 1 && isFinite(x));
+    return {
+        forexEnabled: document.getElementById('fx-forex-enabled').checked,
+        cfdEnabled: document.getElementById('fx-cfd-enabled').checked,
+        oneClickTrading: document.getElementById('fx-oneclick').checked,
+        brokerFeeOpenPct: num('fx-fee-open', 0.02),
+        brokerFeeClosePct: num('fx-fee-close', 0.02),
+        minLeverage: num('fx-lev-min', 1),
+        maxLeverage: maxLev,
+        defaultLeverage: num('fx-lev-default', 10),
+        leverageOptions: opts.length ? opts : FX_DEFAULT_CONFIG.leverageOptions,
+        minLot: num('fx-min-lot', 0.01),
+        maxLot: num('fx-max-lot', 100),
+        lotStep: num('fx-lot-step', 0.01),
+        maintenanceMarginPct: num('fx-maint-margin', 50),
+        minDepositUSDT: num('fx-min-deposit', 10),
+        quoteTtlMs: Math.max(2000, num('fx-quote-ttl', 4500)),
+        maintenanceNotice: document.getElementById('fx-maintenance-notice').value.trim(),
+        defaultSpreadPips: 0,
+        orderTypes: {
+            market: document.getElementById('fx-ot-market').checked,
+            limit: document.getElementById('fx-ot-limit').checked,
+            stop: document.getElementById('fx-ot-stop').checked
+        },
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+}
+
+function saveForexConfig(showMsg) {
+    const btn = event && event.target ? event.target.closest('button') : null;
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...'; }
+    db.collection(COLLECTIONS.ADMIN_CONFIG).doc('forexConfig').set(collectForexConfig(), { merge: true })
+        .then(() => {
+            showToast('Forex/CFD settings saved ✓');
+            logAdminAction('update_forex_config', 'Updated forexConfig');
+            if (showMsg) loadForexAdmin();
+        })
+        .catch(e => showToast(e.message, 'err'))
+        .finally(() => { if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> Save All Settings'; } });
+}
+
+function setLeveragePreset(opts, max) {
+    document.getElementById('fx-lev-options').value = opts;
+    document.getElementById('fx-lev-max').value = max;
+    document.getElementById('fx-lev-min').value = 1;
+    const arr = opts.split(',').map(x => parseFloat(x));
+    if (arr.indexOf(parseInt(document.getElementById('fx-lev-default').value, 10)) === -1) {
+        document.getElementById('fx-lev-default').value = arr[Math.min(4, arr.length - 1)];
     }
-    
-    db.collection(COLLECTIONS.NFTS).orderBy('createdAt','desc').get()
-        .then(renderNFTs)
-        .catch(() => {
-            // Fallback: load without ordering (avoids missing-index error)
-            db.collection(COLLECTIONS.NFTS).get()
-                .then(renderNFTs)
-                .catch(() => { grid.innerHTML = '<div style="grid-column:span 2;text-align:center;padding:40px;color:var(--danger);"><i class="fas fa-exclamation-triangle"></i><br>Error loading NFTs</div>'; });
-        });
+    showToast('Leverage preset applied — Save All Settings to confirm');
 }
 
-function toggleNFT(id, active) {
-    db.collection(COLLECTIONS.NFTS).doc(id).update({ active, status: active ? 'available' : 'disabled' }).catch(e => showToast(e.message,'err'));
+function fxCatLabel(c) {
+    return { forex:'Forex', metals:'Metals', metal:'Metals', indices:'Indices', index:'Indices', energy:'Energy', crypto:'Crypto' }[c] || c;
+}
+function fxCatColor(c) {
+    return { forex:'var(--primary)', metals:'var(--warning)', metal:'var(--warning)', indices:'var(--info)', index:'var(--info)', energy:'var(--danger)', crypto:'var(--purple)' }[c] || 'var(--textG)';
 }
 
-function deleteNFT(id, name) {
-    showConfirm('Delete NFT', `Are you sure you want to delete "${name}"? This cannot be undone.`, 'danger', () => {
-        db.collection(COLLECTIONS.NFTS).doc(id).delete()
-            .then(() => { showToast('NFT deleted ✓'); logAdminAction('delete_nft', `NFT: ${name}`); loadNFTs(); })
+function renderForexInstruments() {
+    const box = document.getElementById('fx-instruments-list');
+    if (!box) return;
+    const q = (document.getElementById('fx-inst-search') ? document.getElementById('fx-inst-search').value : '').trim().toLowerCase();
+    let list = _fxInstDocs.slice();
+    if (q) list = list.filter(d => (d.symbol || '').toLowerCase().includes(q) || (d.name || '').toLowerCase().includes(q) || (d.tvSymbol || '').toLowerCase().includes(q));
+
+    const enabledCount = _fxInstDocs.filter(d => d.enabled !== false).length;
+    const head = `<div style="color:var(--textG);font-size:12px;margin-bottom:10px;">Total <b style="color:var(--text);">${_fxInstDocs.length}</b> · Enabled <b style="color:var(--primary);">${enabledCount}</b> · 0 document hone par website apni default 28 pairs dikhata hai.</div>`;
+
+    if (!list.length) {
+        box.innerHTML = head + `<div style="text-align:center;padding:40px;color:var(--textG);">
+            <i class="fas fa-infinity" style="font-size:32px;opacity:.3;display:block;margin-bottom:8px;"></i>
+            ${_fxInstDocs.length ? 'No instrument matches your search.' : 'No custom instruments. Website defaults active.'}
+            <div style="margin-top:14px;"><button onclick="seedDefaultInstruments()" class="btn btn-p" style="padding:8px 16px;font-size:13px;"><i class="fas fa-download"></i> Load 25 Defaults</button></div>
+        </div>`;
+        return;
+    }
+
+    box.innerHTML = head + list.map(d => {
+        const on = d.enabled !== false;
+        return `<div style="display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--border);border-radius:12px;margin-bottom:8px;background:var(--surface);flex-wrap:wrap;">
+            <div style="min-width:64px;">
+                <div style="font-weight:700;font-size:13px;">${d.symbol || d.id}</div>
+                <span style="font-size:10px;font-weight:700;color:${fxCatColor(d.category)};background:${fxCatColor(d.category)}22;padding:2px 7px;border-radius:6px;">${fxCatLabel(d.category)}</span>
+            </div>
+            <div style="flex:1;min-width:140px;">
+                <div style="font-weight:600;font-size:13px;">${d.name || '—'}</div>
+                <div style="color:var(--textG);font-size:11px;font-family:monospace;">${d.tvSymbol || '—'} · ${d.digits ?? '—'} digits · size ${d.contractSize ?? '—'}</div>
+            </div>
+            <label class="toggle" style="flex-shrink:0;"><input type="checkbox" ${on ? 'checked' : ''} onchange="toggleInstrument('${d.id}', this.checked)"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+            <div style="display:flex;gap:6px;flex-shrink:0;">
+                <button onclick="testInstrumentPrice('${d.id}')" class="btn btn-s btn-icon" title="Live price test"><i class="fas fa-signal"></i></button>
+                <button onclick="editInstrument('${d.id}')" class="btn btn-s btn-icon" title="Edit"><i class="fas fa-pen"></i></button>
+                <button onclick="deleteInstrument('${d.id}','${(d.symbol || '').replace(/'/g, '')}')" class="btn btn-d btn-icon" title="Delete"><i class="fas fa-trash"></i></button>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function openInstrumentModal(id) {
+    const editing = id ? _fxInstDocs.find(d => d.id === id) : null;
+    document.getElementById('fx-inst-id').value = editing ? editing.id : '';
+    document.getElementById('fx-inst-modal-title').textContent = editing ? 'Edit Instrument' : 'Add Instrument';
+    document.getElementById('fx-inst-symbol').value = editing ? (editing.symbol || '') : '';
+    document.getElementById('fx-inst-name').value = editing ? (editing.name || '') : '';
+    document.getElementById('fx-inst-category').value = editing ? (editing.category || 'forex') : 'forex';
+    document.getElementById('fx-inst-tv').value = editing ? (editing.tvSymbol || '') : '';
+    document.getElementById('fx-inst-digits').value = editing ? (editing.digits ?? 5) : 5;
+    document.getElementById('fx-inst-pip').value = editing ? (editing.pipSize ?? 0.0001) : 0.0001;
+    document.getElementById('fx-inst-contract').value = editing ? (editing.contractSize ?? 100000) : 100000;
+    document.getElementById('fx-inst-base').value = editing ? (editing.base || '') : '';
+    document.getElementById('fx-inst-quote').value = editing ? (editing.quote || '') : '';
+    document.getElementById('fx-inst-enabled').checked = editing ? editing.enabled !== false : true;
+    openModal('fx-instrument-modal');
+}
+
+function saveInstrument() {
+    const btn = document.getElementById('fx-inst-save-btn');
+    const sym = document.getElementById('fx-inst-symbol').value.trim().toUpperCase().replace(/\s+/g, '');
+    const name = document.getElementById('fx-inst-name').value.trim();
+    const tv = document.getElementById('fx-inst-tv').value.trim();
+    if (!sym || !name || !tv) { showToast('Symbol, Name aur TradingView Symbol zaroori hain', 'err'); return; }
+    const cat = document.getElementById('fx-inst-category').value;
+    const id = document.getElementById('fx-inst-id').value || sym;
+    const data = {
+        symbol: sym, name, category: cat, tvSymbol: tv,
+        digits: Math.max(0, parseInt(document.getElementById('fx-inst-digits').value, 10) || 0),
+        pipSize: num('fx-inst-pip', 0.0001),
+        contractSize: num('fx-inst-contract', 100000),
+        base: document.getElementById('fx-inst-base').value.trim().toUpperCase() || sym.slice(0, 3),
+        quote: document.getElementById('fx-inst-quote').value.trim().toUpperCase() || sym.slice(3),
+        priceSource: 'tv',
+        enabled: document.getElementById('fx-inst-enabled').checked,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    db.collection('forexInstruments').doc(id).set(data, { merge: true })
+        .then(() => {
+            showToast('Instrument saved ✓');
+            logAdminAction('save_forex_instrument', `Instrument: ${sym}`);
+            closeModal('fx-instrument-modal');
+            return db.collection('forexInstruments').get();
+        })
+        .then(snap => { if (snap) { _fxInstDocs = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderForexInstruments(); } })
+        .catch(e => showToast(e.message, 'err'))
+        .finally(() => { btn.disabled = false; btn.innerHTML = '<i class="fas fa-save"></i> Save Instrument'; });
+}
+
+function editInstrument(id) { openInstrumentModal(id); }
+
+function toggleInstrument(id, enabled) {
+    db.collection('forexInstruments').doc(id).update({ enabled: !!enabled, updatedAt: firebase.firestore.FieldValue.serverTimestamp() })
+        .then(() => {
+            const d = _fxInstDocs.find(x => x.id === id); if (d) d.enabled = !!enabled;
+            renderForexInstruments();
+            showToast(`${id} ${enabled ? 'enabled' : 'disabled'}`);
+        })
+        .catch(e => showToast(e.message, 'err'));
+}
+
+function deleteInstrument(id, name) {
+    showConfirm('Delete Instrument', `"${name || id}" website se hat jayega. Sure?`, 'danger', () => {
+        db.collection('forexInstruments').doc(id).delete()
+            .then(() => {
+                _fxInstDocs = _fxInstDocs.filter(x => x.id !== id);
+                renderForexInstruments();
+                showToast('Instrument deleted ✓');
+                logAdminAction('delete_forex_instrument', `Instrument: ${name || id}`);
+            })
             .catch(e => showToast(e.message, 'err'));
     });
 }
 
-function openNFTModal() {
-    document.getElementById('nft-id').value = '';
-    document.getElementById('nft-modal-title').textContent = 'Add NFT';
-    document.getElementById('nft-name').value = '';
-    document.getElementById('nft-price').value = '';
-    document.getElementById('nft-rarity').value = 'common';
-    document.getElementById('nft-description').value = '';
-    document.getElementById('nft-img-preview').style.display = 'none';
-    document.getElementById('nft-drop-text').style.display = '';
-    document.getElementById('nft-upload-progress').style.display = 'none';
-    window._tempNFTImageUrl = null;
-    window._nftPendingFile = null;
-    openModal('nft-modal');
-}
-
-function editNFT(id) {
-    db.collection(COLLECTIONS.NFTS).doc(id).get().then(doc => {
-        const d = doc.data();
-        document.getElementById('nft-id').value = id;
-        document.getElementById('nft-modal-title').textContent = 'Edit NFT';
-        document.getElementById('nft-name').value = d.name||'';
-        document.getElementById('nft-price').value = d.price||'';
-        document.getElementById('nft-rarity').value = d.rarity||'common';
-        document.getElementById('nft-description').value = d.description||'';
-        if (d.image) { document.getElementById('nft-img-preview').src = d.image; document.getElementById('nft-img-preview').style.display = 'block'; document.getElementById('nft-drop-text').style.display = 'none'; }
-        window._tempNFTImageUrl = d.image;
-        openModal('nft-modal');
+function seedDefaultInstruments() {
+    showConfirm('Load Defaults', '28 default pairs seed honge. Existing custom entries overwrite ho sakti hain. Continue?', 'success', () => {
+        const batch = db.batch();
+        FX_DEFAULT_INSTRUMENTS.forEach(i => batch.set(db.collection('forexInstruments').doc(i.symbol), Object.assign({ updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, i)));
+        batch.commit()
+            .then(() => {
+                showToast('28 default instruments loaded ✓');
+                logAdminAction('seed_forex_instruments', 'Seeded 28 defaults');
+                return db.collection('forexInstruments').get();
+            })
+            .then(snap => { _fxInstDocs = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderForexInstruments(); })
+            .catch(e => showToast(e.message, 'err'));
     });
 }
 
-function previewNFTImage(input) {
-    const file = input.files[0];
-    if (!file) return;
-    if (file.size > 5 * 1024 * 1024) { showToast('Image must be under 5MB', 'err'); return; }
-    const reader = new FileReader();
-    reader.onload = e => {
-        document.getElementById('nft-img-preview').src = e.target.result;
-        document.getElementById('nft-img-preview').style.display = 'block';
-        document.getElementById('nft-drop-text').style.display = 'none';
-    };
-    reader.readAsDataURL(file);
-    window._nftPendingFile = file;
+function testInstrumentPrice(id) {
+    const d = _fxInstDocs.find(x => x.id === id);
+    if (!d || !d.tvSymbol) { showToast('No tvSymbol set', 'err'); return; }
+    const url = 'https://scanner.tradingview.com/symbol?symbol=' + encodeURIComponent(d.tvSymbol) + '&fields=close';
+    fetch(url).then(r => r.json()).then(j => {
+        const p = j && parseFloat(j.close);
+        if (isFinite(p)) showToast(`${d.symbol}: ${p} ✓ (chart se same feed)`);
+        else showToast(`${d.symbol}: TradingView ne price nahi bheji`, 'err');
+    }).catch(() => showToast('TradingView unreachable — check symbol', 'err'));
 }
 
-function handleNFTDrop(e) {
-    e.preventDefault();
-    document.getElementById('nft-drop-zone').classList.remove('drag');
-    const file = e.dataTransfer.files[0];
-    if (file && file.type.startsWith('image/')) {
-        const inp = document.getElementById('nft-img-inp');
-        const dt = new DataTransfer();
-        dt.items.add(file);
-        inp.files = dt.files;
-        previewNFTImage(inp);
-    }
+// ── CFD Monitor ──────────────────────────────────────
+function loadCfdMonitor() {
+    document.getElementById('cfd-stat-open').textContent = '…';
+    document.getElementById('cfd-stat-fees').textContent = '…';
+    document.getElementById('cfd-stat-trades').textContent = '…';
+    document.getElementById('cfd-stat-users').textContent = '…';
+    document.getElementById('cfd-open-positions').innerHTML = '<div class="skel" style="height:80px;"></div>';
+    document.getElementById('cfd-recent-trades').innerHTML = '<div class="skel" style="height:80px;"></div>';
+
+    db.collection('cfdPositions').where('status', '==', 'open').limit(200).get()
+        .then(snap => {
+            document.getElementById('cfd-stat-open').textContent = snap.size;
+            const box = document.getElementById('cfd-open-positions');
+            if (snap.empty) { box.innerHTML = '<div style="text-align:center;padding:24px;color:var(--textG);"><i class="fas fa-inbox" style="font-size:26px;opacity:.3;display:block;margin-bottom:6px;"></i>No open positions</div>'; return; }
+            box.innerHTML = snap.docs.map(doc => {
+                const d = doc.data();
+                const dirColor = (d.side === 'buy' || d.side === 'BUY') ? 'var(--primary)' : 'var(--danger)';
+                return `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);flex-wrap:wrap;">
+                    <div>
+                        <div style="font-weight:700;">${d.symbol || '—'} <span style="color:${dirColor};font-size:11px;margin-left:4px;">${(d.side || '').toUpperCase()}</span></div>
+                        <div style="color:var(--textG);font-size:11px;">${d.lots || d.lot || 1} lots · ${d.leverage || 1}x · entry ${Number(d.entryPrice ?? d.openPrice ?? 0).toFixed(2)} · ${String(d.uid || '').slice(0, 8)}</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-weight:700;color:${(d.pnl || 0) >= 0 ? 'var(--primary)' : 'var(--danger)'};">${Number(d.pnl || 0) >= 0 ? '+' : ''}${Number(d.pnl || 0).toFixed(2)}</div>
+                        <div style="color:var(--textG);font-size:11px;">${d.openedAt && d.openedAt.toDate ? d.openedAt.toDate().toLocaleString() : ''}</div>
+                    </div>
+                </div>`;
+            }).join('');
+        })
+        .catch(() => { document.getElementById('cfd-stat-open').textContent = '—'; document.getElementById('cfd-open-positions').innerHTML = '<div style="color:var(--danger);padding:16px;">cfdPositions read failed (rules ya collection missing)</div>'; });
+
+    let tradesRef = db.collection('cfdTrades').limit(100);
+    tradesRef.get().then(snap => {
+        document.getElementById('cfd-stat-trades').textContent = snap.size;
+        let totalFee = 0; const users = new Set();
+        snap.docs.forEach(doc => { const d = doc.data(); totalFee += Number(d.brokerFee || d.fee || 0); if (d.uid) users.add(d.uid); });
+        document.getElementById('cfd-stat-fees').textContent = totalFee.toFixed(2);
+        document.getElementById('cfd-stat-users').textContent = users.size;
+        const box = document.getElementById('cfd-recent-trades');
+        if (snap.empty) { box.innerHTML = '<div style="text-align:center;padding:24px;color:var(--textG);"><i class="fas fa-inbox" style="font-size:26px;opacity:.3;display:block;margin-bottom:6px;"></i>No closed trades yet</div>'; return; }
+        box.innerHTML = snap.docs.slice(0, 25).map(doc => {
+            const d = doc.data();
+            const pnl = Number(d.pnl || 0);
+            return `<div style="display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);">
+                <div><b>${d.symbol || '—'}</b> <span style="color:var(--textG);font-size:11px;">· ${(d.side || '').toUpperCase()} · ${d.lots || d.lot || 1} lots</span></div>
+                <div style="text-align:right;">
+                    <span style="font-weight:700;color:${pnl >= 0 ? 'var(--primary)' : 'var(--danger)'};">${pnl >= 0 ? '+' : ''}${pnl.toFixed(2)}</span>
+                    <span style="color:var(--textG);font-size:11px;margin-left:8px;">fee ${Number(d.brokerFee || d.fee || 0).toFixed(3)}</span>
+                </div>
+            </div>`;
+        }).join('');
+    }).catch(() => { document.getElementById('cfd-stat-trades').textContent = '—'; });
 }
 
-// ── INVEST PLAN IMAGE HANDLERS ──
-function previewInvestImage(input) {
-    const file = input.files[0];
-    if (!file) return;
-    if (file.size > 5 * 1024 * 1024) { showToast('Image must be under 5MB', 'err'); return; }
-    const reader = new FileReader();
-    reader.onload = e => {
-        document.getElementById('invest-img-preview').src = e.target.result;
-        document.getElementById('invest-img-preview').style.display = 'block';
-        document.getElementById('invest-drop-text').style.display = 'none';
-    };
-    reader.readAsDataURL(file);
-    window._investPendingFile = file;
-}
-
-function handleInvestDrop(e) {
-    e.preventDefault();
-    document.getElementById('invest-drop-zone').classList.remove('drag');
-    const file = e.dataTransfer.files[0];
-    if (file && file.type.startsWith('image/')) {
-        const inp = document.getElementById('invest-img-inp');
-        const dt = new DataTransfer();
-        dt.items.add(file);
-        inp.files = dt.files;
-        previewInvestImage(inp);
-    }
-}
-
-async function saveNFT() {
-    const id = document.getElementById('nft-id').value;
-    const btn = document.getElementById('nft-save-btn');
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
-    btn.disabled = true;
-
-    let imageUrl = window._tempNFTImageUrl || '';
-    if (window._nftPendingFile) {
-        try {
-            document.getElementById('nft-upload-progress').style.display = '';
-            imageUrl = await uploadToCloudinary(window._nftPendingFile, pct => {
-                document.getElementById('nft-upload-bar').style.width = pct+'%';
+function scanNegativeBalances() {
+    const out = document.getElementById('fx-negative-list');
+    out.innerHTML = '<div class="skel" style="height:60px;"></div>';
+    _fxNegResults = [];
+    const seen = new Set();
+    const queries = FX_BALANCE_FIELDS.map(f => db.collection(COLLECTIONS.USERS).where(f, '<', 0).limit(200).get()
+        .then(snap => {
+            snap.docs.forEach(doc => {
+                const d = doc.data();
+                FX_BALANCE_FIELDS.forEach(k => {
+                    if (typeof d[k] === 'number' && d[k] < 0 && !seen.has(doc.id + k)) {
+                        seen.add(doc.id + k);
+                        _fxNegResults.push({ uid: doc.id, name: d.name || d.email || doc.id, field: k, value: d[k] });
+                    }
+                });
             });
-            window._nftPendingFile = null;
-            window._tempNFTImageUrl = imageUrl;
-        } catch(e) {
-            showToast('Image upload failed: '+e.message, 'err');
-            btn.innerHTML = '<i class="fas fa-save"></i> Save NFT'; btn.disabled = false;
-            return;
-        }
-    }
-
-    const data = {
-        name: document.getElementById('nft-name').value.trim(),
-        price: parseFloat(document.getElementById('nft-price').value)||0,
-        rarity: document.getElementById('nft-rarity').value,
-        description: document.getElementById('nft-description').value.trim(),
-        image: imageUrl,
-        active: true,
-        status: 'available'
-    };
-
-    if (!data.name) { showToast('Enter NFT name', 'err'); btn.innerHTML = '<i class="fas fa-save"></i> Save NFT'; btn.disabled = false; return; }
-
-    try {
-        if (id) {
-            await db.collection(COLLECTIONS.NFTS).doc(id).update({ ...data, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
-        } else {
-            await db.collection(COLLECTIONS.NFTS).add({ ...data, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-        }
-        showToast('NFT saved ✓');
-        logAdminAction(id?'edit_nft':'add_nft', `NFT: ${data.name}`);
-        closeModal('nft-modal');
-        loadNFTs();
-    } catch(e) {
-        showToast(e.message, 'err');
-    }
-    btn.innerHTML = '<i class="fas fa-save"></i> Save NFT'; btn.disabled = false;
+        }).catch(() => {}));
+    Promise.all(queries).then(renderNegativeResults);
 }
 
-// ═══════════════════════════════════════════════════
+function renderNegativeResults() {
+    const out = document.getElementById('fx-negative-list');
+    if (!_fxNegResults.length) { out.innerHTML = '<div style="color:var(--primary);font-size:13px;padding:8px 0;"><i class="fas fa-check-circle"></i> No negative balances found ✓</div>'; return; }
+    out.innerHTML = `<div style="color:var(--danger);font-size:13px;font-weight:700;margin-bottom:8px;">${_fxNegResults.length} negative balance(s):</div>` +
+        _fxNegResults.map((r, i) => `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);">
+            <div><b>${r.name}</b><div style="color:var(--textG);font-size:11px;">${r.field} = ${Number(r.value).toFixed(2)}</div></div>
+            <button onclick="repairOne(${i})" class="btn btn-s" style="font-size:12px;padding:6px 12px;">Set to 0</button>
+        </div>`).join('');
+}
+
+function repairOne(i) {
+    const r = _fxNegResults[i]; if (!r) return;
+    db.collection(COLLECTIONS.USERS).doc(r.uid).update({ [r.field]: 0 })
+        .then(() => { showToast(`${r.field} → 0 ✓`); logAdminAction('repair_negative_balance', `${r.name} ${r.field}`); scanNegativeBalances(); })
+        .catch(e => showToast(e.message, 'err'));
+}
+
+function repairAllNegativeBalances() {
+    if (!_fxNegResults.length) { scanNegativeBalances(); return; }
+    showConfirm('Repair Balances', `${_fxNegResults.length} balance(s) 0 par set honge. Continue?`, 'warning', () => {
+        const batch = db.batch();
+        _fxNegResults.forEach(r => batch.update(db.collection(COLLECTIONS.USERS).doc(r.uid), { [r.field]: 0 }));
+        batch.commit()
+            .then(() => { showToast(`${_fxNegResults.length} balance(s) repaired ✓`); logAdminAction('repair_negative_balances', `${_fxNegResults.length} fixed`); scanNegativeBalances(); })
+            .catch(e => showToast(e.message, 'err'));
+    });
+}
+
 // 📈 INVESTMENT PLANS
 // ═══════════════════════════════════════════════════
 function loadInvestPlans() {
@@ -3739,7 +4082,7 @@ function globalSearch(val) {
             if (!results.length) { resultsEl.innerHTML = '<div style="padding:12px;color:var(--textG);font-size:13px;">No results found</div>'; return; }
             resultsEl.innerHTML = results.slice(0,10).map(r => {
                 if (r.type === 'user') {
-                    const total = (r.spotBalance||0)+(r.futuresBalance||0)+(r.marginBalance||0)+(r.investBalance||0)+(r.nftBalance||0);
+                    const total = (r.spotBalance||0)+(r.futuresBalance||0)+(r.marginBalance||0)+(r.investBalance||0)+(r.cfdBalance||0)+(r.referralBalance||0);
                     return `<div style="padding:10px;cursor:pointer;border-radius:6px;display:flex;align-items:center;gap:10px;" onclick="openUserProfile('${r.id}');document.getElementById('global-search-results').style.display='none';document.getElementById('global-search').value='';" onmouseover="this.style.background='var(--surfaceL)'" onmouseout="this.style.background=''">
                     <div style="width:36px;height:36px;border-radius:50%;background:var(--primary-dim);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><i class="fas fa-user" style="color:var(--primary);font-size:13px;"></i></div>
                     <div style="flex:1;min-width:0;">
@@ -3902,7 +4245,7 @@ function exportLogData() {
     if (!data.length) { showToast('No data to export', 'warn'); return; }
     let csv = '\uFEFFName,Email,Phone,Spot,Total,KYC,Joined\n';
     data.forEach(u => {
-        const total = (u.spotBalance||0)+(u.futuresBalance||0)+(u.marginBalance||0)+(u.investBalance||0)+(u.nftBalance||0);
+        const total = (u.spotBalance||0)+(u.futuresBalance||0)+(u.marginBalance||0)+(u.investBalance||0)+(u.cfdBalance||0)+(u.referralBalance||0);
         csv += `"${u.name||''}","${u.email||''}","${u.phone||''}",${u.spotBalance||0},${total},"${u.kycStatus||''}","${u.createdAt?.toDate().toLocaleDateString('en-IN')||''}"\n`;
     });
     downloadCSV(csv, `users_${new Date().toISOString().split('T')[0]}.csv`);
