@@ -1726,6 +1726,7 @@ auth.onAuthStateChanged(user => {
             setHomeGreeting();
             initializeDashboardListeners();
             loadTabData('home');
+            ensureAiConfig().then(startChatAiEngine);
             setupKeyboardHide();
         } else {
             showToast('Unauthorized access', 'err');
@@ -1904,7 +1905,7 @@ function initializeDashboardListeners() {
         document.getElementById('stat-users').textContent = snap.size.toLocaleString();
         const today = new Date(); today.setHours(0,0,0,0);
         let n = 0;
-        snap.forEach(d => { const c = d.data().createdAt; if (c && c.toDate() >= today) n++; });
+        snap.forEach(d => { const c = d.data().createdAt; const t = (c && typeof c.toDate === 'function') ? c.toDate() : null; if (t && t >= today) n++; });
         document.getElementById('stat-new-users').textContent = n;
     }, err => console.error('users snap:', err));
     activeListeners.push(u1);
