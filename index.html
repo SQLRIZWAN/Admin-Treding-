@@ -1712,7 +1712,17 @@ let withdrawalsCache = [];
 // ═══════════════════════════════════════════════════
 auth.onAuthStateChanged(user => {
     if (user) {
-        const isAdmin = ALLOWED_ADMINS.includes(user.email) || user.email.includes('admin');
+        // SECURITY: exact allow-list only. The old fallback
+        // `|| user.email.includes('admin')` let ANY registered address
+        // containing the substring "admin" (e.g. attacker@gmail.com ->
+        // "attacker-admin@x.com") render the full admin UI.
+        // Firestore rules are the real gate, but the panel must not pretend
+        // to be an authorisation boundary on its own.
+        const onAllowList = ALLOWED_ADMINS.includes(user.email);
+        // F-3: an allow-listed but UNVERIFIED admin must not get the panel —
+        // but we must not lock them out either, so offer a resend instead of
+        // a silent signOut.
+        const isAdmin = onAllowList && user.emailVerified;
         if (isAdmin) {
             currentUser = user;
             document.getElementById('login-screen').style.display = 'none';
@@ -1728,6 +1738,11 @@ auth.onAuthStateChanged(user => {
             loadTabData('home');
             ensureAiConfig().then(startChatAiEngine);
             setupKeyboardHide();
+        } else if (onAllowList) {
+            // allow-listed, email not verified yet
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('admin-panel').style.display = 'none';
+            showVerifyGate(user);
         } else {
             showToast('Unauthorized access', 'err');
             auth.signOut();
@@ -1739,6 +1754,41 @@ auth.onAuthStateChanged(user => {
         document.getElementById('admin-panel').style.display = 'none';
     }
 });
+
+// ── F-3: verification gate for an allow-listed but unverified admin ──
+function showVerifyGate(user) {
+    const old = document.getElementById('verify-gate');
+    if (old) old.remove();
+    const box = document.createElement('div');
+    box.id = 'verify-gate';
+    box.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;'
+        + 'justify-content:center;background:rgba(10,12,20,.96);padding:20px;font-family:system-ui,sans-serif';
+    box.innerHTML = `
+      <div style="max-width:420px;background:#151a2e;border:1px solid #2a3350;border-radius:16px;padding:28px;text-align:center;color:#e8ecf7">
+        <div style="font-size:40px;margin-bottom:12px">✉️</div>
+        <h2 style="margin:0 0 10px;font-size:20px">Verify your admin email</h2>
+        <p style="margin:0 0 18px;font-size:14px;color:#9aa4c0;line-height:1.6">
+          <b>${user.email}</b> is on the admin allow-list, but the address is not verified yet.
+          Open the verification link we send, then reload this page.
+        </p>
+        <button id="vg-resend" style="width:100%;padding:12px;border:0;border-radius:10px;background:#6c5ce7;color:#fff;font-weight:600;cursor:pointer;margin-bottom:10px">
+          Resend verification email
+        </button>
+        <button id="vg-out" style="width:100%;padding:12px;border:1px solid #2a3350;border-radius:10px;background:transparent;color:#9aa4c0;cursor:pointer">
+          Sign out
+        </button>
+        <p id="vg-msg" style="margin:14px 0 0;font-size:12px;color:#9aa4c0;min-height:16px"></p>
+      </div>`;
+    document.body.appendChild(box);
+    const msg = box.querySelector('#vg-msg');
+    box.querySelector('#vg-resend').addEventListener('click', async (e) => {
+        e.target.disabled = true; msg.textContent = 'Sending...';
+        try { await user.sendEmailVerification(); msg.textContent = 'Sent — check your inbox (and spam).'; }
+        catch (err) { msg.textContent = 'Could not send: ' + (err.message || err.code); }
+        e.target.disabled = false;
+    });
+    box.querySelector('#vg-out').addEventListener('click', () => { box.remove(); auth.signOut(); });
+}
 
 function handleAdminLogin() {
     const email = document.getElementById('admin-email').value.trim();
@@ -2448,24 +2498,79 @@ function showWithdrawalModal(wd) {
     openModal('txn-modal');
 }
 
+// ═══════════════════════════════════════════════════════════════════
+// F-4 GUARD: a client can write its OWN users/{uid} wallet fields, so
+// `users.spotBalance` is NOT trustworthy. The only trustworthy money
+// signal is the server-side trail of APPROVED payments minus what has
+// already been paid out. Never approve a withdrawal that exceeds it —
+// that is what stops a doctored balance from becoming real cash.
+// ═══════════════════════════════════════════════════════════════════
+async function verifiedCreditFor(uid) {
+    const res = { approvedIn: 0, paidOut: 0, available: 0, payments: [], error: null };
+    if (!uid) { res.error = 'no uid on request'; return res; }
+    try {
+        // approved deposits
+        let ps = await db.collection(COLLECTIONS.PAYMENTS)
+            .where('uid', '==', uid).where('status', '==', 'approved').get();
+        res.approvedIn = ps.docs.reduce((s, d) => s + (Number(d.data().amount) || 0), 0);
+        // everything already approved/paid on withdrawals
+        let ws = await db.collection(COLLECTIONS.WITHDRAWALS)
+            .where('uid', '==', uid).where('status', '==', 'approved').get();
+        res.paidOut = ws.docs.reduce((s, d) => s + (Number(d.data().amount) || 0), 0);
+        res.available = res.approvedIn - res.paidOut;
+    } catch (e) {
+        res.error = e.message || String(e);
+    }
+    return res;
+}
+
 function approveWithdrawal(id) {
-    showConfirm('Approve Withdrawal', 'Verify that you have transferred the amount before approving.', 'warn', async () => {
+    showConfirm('Approve Withdrawal', 'Checking verified credit first…', 'warn', async () => {
         closeModal('txn-modal');
         try {
             const snap = await db.collection(COLLECTIONS.WITHDRAWALS).doc(id).get();
             const wd = snap.data();
+            const amount = Number(wd.amount) || 0;
+
+            // ── trust check ───────────────────────────────────────────
+            const v = await verifiedCreditFor(wd.uid);
+            if (v.error) {
+                showToast('Cannot verify credit (' + v.error + ') — approval blocked', 'err');
+                logAdminAction('approve_withdrawal_blocked', `Could not verify credit for ${wd.uid}: ${v.error}`);
+                return;
+            }
+            // count this request itself if it was already marked approved
+            const alreadyCounted = wd.status === 'approved' ? amount : 0;
+            const remaining = v.available - alreadyCounted;
+            if (amount > remaining + 0.009) {
+                showConfirm('BLOCKED — unverified money',
+                    'This request is ₹' + mny(amount) + ' but verified credit left is only ₹'
+                    + mny(remaining) + '.\n\n'
+                    + 'Approved deposits: ₹' + mny(v.approvedIn) + '\n'
+                    + 'Already withdrawn: ₹' + mny(v.paidOut) + '\n\n'
+                    + 'The user can edit their own wallet fields in Firestore, so their '
+                    + 'displayed balance is not proof of money. Approve only against a real '
+                    + 'bank/UPI transfer you have verified yourself.',
+                    'danger', () => {
+                        logAdminAction('approve_withdrawal_blocked',
+                            `Blocked ${id}: asked ₹${amount} > verified ₹${remaining}`);
+                        showToast('Approval blocked — no verified credit', 'err');
+                    });
+                return;
+            }
+
             const batch = db.batch();
             batch.update(db.collection(COLLECTIONS.WITHDRAWALS).doc(id), { ...getStatusFlags('approved'), approvedAt: firebase.firestore.FieldValue.serverTimestamp() });
             // Deduct balance if not already deducted
             if (wd.uid && !wd.balanceDeducted) {
                 batch.update(db.collection(COLLECTIONS.USERS).doc(wd.uid), {
-                    spotBalance: firebase.firestore.FieldValue.increment(-(wd.amount||0)),
+                    spotBalance: firebase.firestore.FieldValue.increment(-(amount)),
                     balanceDeducted: true
                 });
             }
             await batch.commit();
             showToast('Withdrawal approved ✓');
-            logAdminAction('approve_withdrawal', `Approved withdrawal ${id}`);
+            logAdminAction('approve_withdrawal', `Approved withdrawal ${id} (verified credit ₹${v.available})`);
             loadWithdrawals(true);
         } catch(e) { showToast(e.message,'err'); }
     });
