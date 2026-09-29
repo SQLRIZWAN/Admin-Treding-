@@ -717,6 +717,16 @@ select.inp:focus{box-shadow:0 0 0 3px rgba(0,200,83,.15);}
 
                 <!-- Live Chat Content -->
                 <div id="log-chats-content" style="display:none;">
+                    <div class="card" id="ai-autoreply-bar" style="margin-bottom:12px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+                        <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:220px;">
+                            <div style="width:34px;height:34px;border-radius:10px;background:var(--primary-dim);color:var(--primary);display:flex;align-items:center;justify-content:center;flex:none;"><i class="fas fa-robot"></i></div>
+                            <div>
+                                <div style="font-weight:700;font-size:13px;">SQL Ai auto-reply</div>
+                                <div style="color:var(--textG);font-size:11.5px;" id="ai-autoreply-state">Loading…</div>
+                            </div>
+                        </div>
+                        <label class="toggle" style="flex:none;"><input type="checkbox" id="toggle-ai-autoreply" onchange="setAiAutoReply(this.checked)"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+                    </div>
                     <div class="chips" style="margin-bottom:12px;">
                         <button class="chip active" onclick="loadChats('open',this)">Open</button>
                         <button class="chip" onclick="loadChats('closed',this)">Closed</button>
@@ -1090,10 +1100,10 @@ select.inp:focus{box-shadow:0 0 0 3px rgba(0,200,83,.15);}
                         <div style="margin-bottom:16px;">
                             <label style="color:var(--textG);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:6px;">Gemini Model</label>
                             <select class="inp" id="setting-gemini-model">
-                                <option value="gemini-2.0-flash">gemini-2.0-flash (fast, recommended)</option>
-                                <option value="gemini-2.5-flash">gemini-2.5-flash</option>
+                                <option value="gemini-2.5-flash">gemini-2.5-flash (fast, recommended)</option>
+                                <option value="gemini-flash-latest">gemini-flash-latest</option>
+                                <option value="gemini-3.5-flash">gemini-3.5-flash (newest)</option>
                                 <option value="gemini-2.5-pro">gemini-2.5-pro (best quality)</option>
-                                <option value="gemini-1.5-flash">gemini-1.5-flash</option>
                             </select>
                         </div>
                         <button onclick="saveAiSettings(true)" class="btn btn-p" style="width:100%;">Save SQL Ai Settings</button>
@@ -1723,6 +1733,7 @@ auth.onAuthStateChanged(user => {
         }
     } else {
         cleanupListeners();
+        stopChatAiEngine();
         document.getElementById('login-screen').style.display = 'flex';
         document.getElementById('admin-panel').style.display = 'none';
     }
@@ -3344,6 +3355,7 @@ function chatShort(t) {
 function loadChats(filter = 'open', btn = null) {
     if (btn) { document.querySelectorAll('#log-chats-content .chip').forEach(c=>c.classList.remove('active')); btn.classList.add('active'); }
     closeChatThread();
+    if (!admAiCfg.loaded) ensureAiConfig().then(startChatAiEngine); else renderAiAutoReplyState();
     const list = document.getElementById('chats-list');
     list.innerHTML = skeletonCards(3);
     const base = db.collection(COLLECTIONS.CHATS);
@@ -3482,6 +3494,165 @@ function markChatClosed() {
             .then(() => { showToast('Chat resolved ✓'); logAdminAction('chat_close','Closed chat ' + uid); closeChatThread(); loadChats('open'); })
             .catch(e => showToast(e.message,'err'));
     });
+}
+
+
+// ═══════════════════════════════════════════════════
+// 🤖 SQL AI AUTO-REPLY FOR LIVE CHAT (admin side)
+// ═══════════════════════════════════════════════════
+let chatAiEngineUnsub = null;
+let admAiCfg = { key: '', model: 'gemini-2.5-flash', auto: true, loaded: false };
+const chatAiBusy = {};
+
+const ADMIN_SUPPORT_SYSTEM = [
+    'You are the official Spot Team support desk of Treding Store (treding.store), answering inside the in-app Live Chat on behalf of the admin team.',
+    'Be warm, short and useful: 2 to 5 lines, or a few bullets. No markdown tables, no essay.',
+    'LANGUAGE: reply in the same language the user writes in. Hinglish (Hindi in Latin letters) is fine, but keep page names, button names and labels in exact English.',
+    'NEVER ask for or accept a password, OTP, PIN, card CVV or seed phrase. Say clearly that support will never ask for them.',
+    'Typical issues and how to answer:',
+    '- Deposit not credited: ask for UTR / transaction id, amount, method (UPI or USDT) and time; verification usually settles in 10-30 minutes and the team will match it.',
+    '- Withdrawal pending: confirm KYC status, remind them of the 500 INR minimum and daily limit, ask for the withdrawal request time.',
+    '- KYC: tell them Profile -> KYC, which document to upload, review takes a few hours.',
+    '- Trading / forex issue: ask for the pair, order id or screenshot; explain liquidation, SL/TP, fees and market hours briefly.',
+    '- Login / password reset: point them to the login screen and Gmail sign-in; never handle credentials yourself.',
+    'If the case needs a human (dispute, large amount, repeated failure), say the Spot Team will follow up here shortly and stop there.',
+    'Never promise a guaranteed refund time or guaranteed profit. Do not invent transaction statuses you cannot see.'
+].join('\n\n');
+
+async function ensureAiConfig() {
+    try {
+        const d = await db.collection(COLLECTIONS.ADMIN_CONFIG).doc('config').get();
+        const x = d.exists ? d.data() : {};
+        admAiCfg = {
+            key: x.geminiApiKey || '',
+            model: x.geminiModel || 'gemini-2.5-flash',
+            auto: x.aiAutoReply !== false,
+            loaded: true
+        };
+    } catch (e) { admAiCfg.loaded = true; }
+    renderAiAutoReplyState();
+}
+
+function renderAiAutoReplyState() {
+    const el = document.getElementById('ai-autoreply-state');
+    const tg = document.getElementById('toggle-ai-autoreply');
+    if (tg) tg.checked = !!admAiCfg.auto;
+    if (!el) return;
+    if (!admAiCfg.auto) { el.textContent = 'Off — nobody answers automatically'; return; }
+    if (!admAiCfg.key) { el.innerHTML = 'On, but no Gemini key saved — add it in Tools &rsaquo; Settings'; return; }
+    el.textContent = 'On — SQL Ai replies to every open chat · ' + admAiCfg.model;
+}
+
+function setAiAutoReply(on) {
+    admAiCfg.auto = !!on;
+    renderAiAutoReplyState();
+    db.collection(COLLECTIONS.ADMIN_CONFIG).doc('config').set({
+        aiAutoReply: !!on,
+        aiUpdatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true })
+        .then(() => { showToast('SQL Ai auto-reply: ' + (on ? 'ON' : 'OFF')); logAdminAction('ai_autoreply', 'Auto-reply ' + (on ? 'enabled' : 'disabled')); })
+        .catch(e => showToast(e.message, 'err'));
+    if (on) { ensureAiConfig().then(startChatAiEngine); } else { stopChatAiEngine(); }
+}
+
+async function adminCallGemini(systemText, contents, maxTokens) {
+    const key = admAiCfg.key;
+    if (!key) throw new Error('no-key');
+    const ALL = ['gemini-2.5-flash', 'gemini-flash-latest', 'gemini-3.5-flash'];
+    const chain = [admAiCfg.model].concat(ALL.filter(m => m !== admAiCfg.model));
+    let lastErr = null;
+    for (let i = 0; i < chain.length; i++) {
+        const url = 'https://generativelanguage.googleapis.com/v1beta/models/' +
+            encodeURIComponent(chain[i]) + ':generateContent?key=' + encodeURIComponent(key);
+        let res;
+        try {
+            res = await fetch(url, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    system_instruction: { parts: [{ text: systemText }] },
+                    contents: contents,
+                    generationConfig: { temperature: 0.5, maxOutputTokens: maxTokens || 500, topP: 0.95 }
+                })
+            });
+        } catch (e) { lastErr = e; continue; }
+        if (!res.ok) { lastErr = new Error('HTTP ' + res.status); if (res.status >= 500 || res.status === 404) continue; throw lastErr; }
+        const j = await res.json();
+        const cand = j && j.candidates && j.candidates[0];
+        const txt = cand && cand.content && cand.content.parts ? cand.content.parts.map(x => x.text || '').join('') : '';
+        if (!txt) { lastErr = new Error('empty'); continue; }
+        return txt.trim();
+    }
+    throw lastErr || new Error('no-model');
+}
+
+function startChatAiEngine() {
+    if (chatAiEngineUnsub) return;
+    if (!admAiCfg.loaded) { ensureAiConfig().then(startChatAiEngine); return; }
+    try {
+        chatAiEngineUnsub = db.collection(COLLECTIONS.CHATS).where('status', '==', 'open').limit(20)
+            .onSnapshot(snap => {
+                snap.docs.forEach(d => { try { adminAiMaybeReply(d.id, d.data()); } catch (e) {} });
+            }, () => { stopChatAiEngine(); });
+    } catch (e) {}
+}
+
+function stopChatAiEngine() {
+    if (chatAiEngineUnsub) { try { chatAiEngineUnsub(); } catch (e) {} chatAiEngineUnsub = null; }
+}
+
+async function adminAiMaybeReply(uid, th) {
+    if (!admAiCfg.auto || !admAiCfg.key) return;
+    if (chatAiBusy[uid]) return;
+    if (!th || th.lastFrom !== 'user' || !th.lastMsgId) return;
+    const mid = th.lastMsgId;
+    if (th.aiRepliedFor === mid) return;
+    chatAiBusy[uid] = true;
+    let ref = null;
+    try {
+        ref = db.collection(COLLECTIONS.CHATS).doc(uid);
+        const claim = await db.runTransaction(async tx => {
+            const d = await tx.get(ref);
+            if (!d.exists) return false;
+            const x = d.data() || {};
+            if (x.aiRepliedFor === mid) return false;
+            if (x.lastFrom !== 'user') return false;
+            tx.update(ref, { aiRepliedFor: mid, aiRunning: true, aiUpdatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+            return true;
+        });
+        if (!claim) return;
+
+        const snap = await ref.collection('messages').where('uid', '==', uid).limit(100).get();
+        const docs = snap.docs.map(x => ({ id: x.id, ...x.data() }));
+        docs.sort((a, b) => chatMs(a.at) - chatMs(b.at));
+        const contents = docs.slice(-14).map(m => ({
+            role: m.from === 'user' ? 'user' : 'model',
+            text: (m.from === 'admin' ? '(support) ' : '') + String(m.text || '')
+        }));
+        if (!contents.length) return;
+        const reply = await adminCallGemini(ADMIN_SUPPORT_SYSTEM, contents, 500);
+
+        const batch = db.batch();
+        batch.set(ref.collection('messages').doc(), {
+            uid: uid, from: 'admin', agent: 'sqlai', auto: true, replyTo: mid, text: reply,
+            at: firebase.firestore.FieldValue.serverTimestamp(), read: false,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        batch.set(ref, {
+            lastMessage: String(reply).slice(0, 180), lastFrom: 'admin', lastAgent: 'sqlai',
+            lastAt: firebase.firestore.FieldValue.serverTimestamp(),
+            unreadUser: firebase.firestore.FieldValue.increment(1),
+            aiRunning: false, updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+        await batch.commit();
+        showToast('SQL Ai replied ✓');
+        logAdminAction('ai_chat_reply', 'Auto-replied to ' + uid);
+        loadChats('open');
+    } catch (e) {
+        console.warn('AI auto-reply:', e && e.message);
+        try { if (ref) await ref.set({ aiRunning: false }, { merge: true }); } catch (e2) {}
+    } finally {
+        chatAiBusy[uid] = false;
+    }
 }
 
 // ═══════════════════════════════════════════════════
@@ -4315,8 +4486,16 @@ function loadSettings() {
         .then(doc => { if (doc.exists) { const d = doc.data(); document.getElementById('setting-upi').value = d.upi||''; document.getElementById('setting-usdt').value = d.usdtAddress||'';
                 if (Number(d.usdtToInr) > 0) { setAdmRate(Number(d.usdtToInr)); document.getElementById('setting-usdtrate').value = d.usdtToInr; } else { document.getElementById('setting-usdtrate').value = admRate; }
                 const gk = document.getElementById('setting-gemini'); if (gk) gk.value = d.geminiApiKey || '';
-                const gm = document.getElementById('setting-gemini-model'); if (gm) gm.value = d.geminiModel || 'gemini-2.0-flash';
-                const tg = document.getElementById('toggle-ai'); if (tg) tg.checked = !(d.aiEnabled === false); } })
+                const gm = document.getElementById('setting-gemini-model');
+                if (gm) { const mv = d.geminiModel || gm.options[0].value;
+                    if (mv && !Array.from(gm.options).some(o => o.value === mv)) { const op = document.createElement('option'); op.value = mv; op.textContent = mv + ' (saved)'; gm.appendChild(op); }
+                    if (mv) gm.value = mv; }
+                const tg = document.getElementById('toggle-ai'); if (tg) tg.checked = !(d.aiEnabled === false);
+                admAiCfg.key = d.geminiApiKey || '';
+                admAiCfg.model = d.geminiModel || 'gemini-2.5-flash';
+                admAiCfg.auto = d.aiAutoReply !== false;
+                admAiCfg.loaded = true;
+                renderAiAutoReplyState(); } })
         .catch(()=>{});
     db.collection(COLLECTIONS.WEBSITE_CONFIG).doc('config').get()
         .then(doc => {
@@ -4337,19 +4516,25 @@ function loadSettings() {
 
 function saveAiSettings(fromButton) {
     const key = (document.getElementById('setting-gemini') || {}).value || '';
-    const model = (document.getElementById('setting-gemini-model') || {}).value || 'gemini-2.0-flash';
+    const modelSel = document.getElementById('setting-gemini-model');
+    const model = (modelSel && modelSel.value) || 'gemini-2.5-flash';
     const enabled = document.getElementById('toggle-ai') ? document.getElementById('toggle-ai').checked : true;
     if (fromButton && !key.trim() && enabled) {
         showToast('Enter a Gemini API key or turn SQL Ai off', 'err');
         return;
     }
+    admAiCfg.key = key.trim();
+    admAiCfg.model = model;
+    admAiCfg.auto = document.getElementById('toggle-ai-autoreply') ? document.getElementById('toggle-ai-autoreply').checked : admAiCfg.auto;
+    admAiCfg.loaded = true;
     db.collection(COLLECTIONS.ADMIN_CONFIG).doc('config').set({
         geminiApiKey: key.trim(),
         geminiModel: model,
         aiEnabled: !!enabled,
+        aiAutoReply: !!admAiCfg.auto,
         aiUpdatedAt: firebase.firestore.FieldValue.serverTimestamp()
     }, { merge:true })
-        .then(() => { showToast('SQL Ai settings saved ✓'); logAdminAction('update_ai_settings','SQL Ai ' + (enabled?'enabled':'disabled') + ' · ' + model); })
+        .then(() => { showToast('SQL Ai settings saved ✓'); logAdminAction('update_ai_settings','SQL Ai ' + (enabled?'enabled':'disabled') + ' · ' + model); renderAiAutoReplyState(); if (enabled && admAiCfg.auto) startChatAiEngine(); })
         .catch(e => showToast(e.message,'err'));
 }
 
