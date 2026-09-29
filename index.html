@@ -661,6 +661,7 @@ select.inp:focus{box-shadow:0 0 0 3px rgba(0,200,83,.15);}
                     <button class="st-btn active" id="log-tab-users" onclick="switchUsersTab('users')">Users</button>
                     <button class="st-btn" id="log-tab-kyc" onclick="switchUsersTab('kyc')">KYC</button>
                     <button class="st-btn" id="log-tab-reports" onclick="switchUsersTab('reports')">Support</button>
+                    <button class="st-btn" id="log-tab-chats" onclick="switchUsersTab('chats')">Live Chat<span class="filter-badge" id="chats-badge" style="display:none;margin-left:6px;">0</span></button>
                     <button class="st-btn" id="log-tab-adminlogs" onclick="switchUsersTab('adminlogs')">Admin Logs</button>
                 </div>
 
@@ -712,6 +713,36 @@ select.inp:focus{box-shadow:0 0 0 3px rgba(0,200,83,.15);}
                         <button class="chip" onclick="loadReports('all',this)">All</button>
                     </div>
                     <div id="reports-list"></div>
+                </div>
+
+                <!-- Live Chat Content -->
+                <div id="log-chats-content" style="display:none;">
+                    <div class="chips" style="margin-bottom:12px;">
+                        <button class="chip active" onclick="loadChats('open',this)">Open</button>
+                        <button class="chip" onclick="loadChats('closed',this)">Closed</button>
+                        <button class="chip" onclick="loadChats('all',this)">All</button>
+                    </div>
+                    <div id="chats-list" style="display:grid;gap:10px;"></div>
+                    <div id="chat-thread" style="display:none;">
+                        <div class="card">
+                            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px;flex-wrap:wrap;">
+                                <div>
+                                    <div id="chat-thread-name" style="font-weight:700;">—</div>
+                                    <div id="chat-thread-meta" style="font-size:12px;color:var(--textG);">—</div>
+                                </div>
+                                <div style="display:flex;gap:8px;">
+                                    <button onclick="markChatClosed()" class="btn btn-s" style="padding:8px 12px;font-size:12px;"><i class="fas fa-check"></i> Resolve</button>
+                                    <button onclick="openUserProfile(currentChatUid)" id="chat-profile-btn" class="btn btn-s" style="padding:8px 12px;font-size:12px;display:none;"><i class="fas fa-user"></i> Profile</button>
+                                    <button onclick="closeChatThread()" class="btn btn-s" style="padding:8px 12px;font-size:12px;"><i class="fas fa-arrow-left"></i> Back</button>
+                                </div>
+                            </div>
+                            <div id="chat-msgs" style="height:340px;overflow-y:auto;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;display:flex;flex-direction:column;gap:8px;"></div>
+                            <div style="display:flex;gap:8px;margin-top:10px;">
+                                <input type="text" class="inp" id="chat-reply" placeholder="Type a reply to the user…" style="flex:1;font-size:14px;" onkeydown="if(event.key==='Enter'){event.preventDefault();sendChatReply();}">
+                                <button onclick="sendChatReply()" class="btn btn-p" style="padding:10px 16px;"><i class="fas fa-paper-plane"></i> Send</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Admin Logs Content -->
@@ -1040,6 +1071,32 @@ select.inp:focus{box-shadow:0 0 0 3px rgba(0,200,83,.15);}
                             <div style="color:var(--textG);font-size:11px;margin-top:6px;"><i class="fas fa-info-circle" style="margin-right:4px;"></i>Used everywhere in the store for USDT ↔ ₹ conversion</div>
                         </div>
                         <button onclick="savePaymentSettings()" class="btn btn-p" style="width:100%;">Save Payment Settings</button>
+                    </div>
+                    <div class="card" style="margin-bottom:12px;">
+                        <div style="font-weight:700;font-size:14px;margin-bottom:6px;color:var(--primary);"><i class="fas fa-robot mr-2"></i>SQL Ai Assistant</div>
+                        <div style="color:var(--textG);font-size:12px;margin-bottom:16px;">Powers the SQL Ai chat bubble on treding.store. The key is stored in Firestore config and read by the app at runtime — never paste it into the code.</div>
+                        <div class="label-row">
+                            <div>
+                                <div style="font-weight:600;">SQL Ai enabled</div>
+                                <div style="color:var(--textG);font-size:12px;">Show the SQL Ai bubble to every user</div>
+                            </div>
+                            <label class="toggle"><input type="checkbox" id="toggle-ai" checked onchange="saveAiSettings()"><div class="toggle-track"></div><div class="toggle-thumb"></div></label>
+                        </div>
+                        <div style="margin-bottom:16px;">
+                            <label style="color:var(--textG);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:6px;">Gemini API Key</label>
+                            <input type="password" class="inp" id="setting-gemini" placeholder="AIza…" autocomplete="off" spellcheck="false">
+                            <div style="color:var(--textG);font-size:11px;margin-top:6px;"><i class="fas fa-lock" style="margin-right:4px;"></i>Saved to <b>admin/config</b> only. Leave blank to switch SQL Ai off.</div>
+                        </div>
+                        <div style="margin-bottom:16px;">
+                            <label style="color:var(--textG);font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;display:block;margin-bottom:6px;">Gemini Model</label>
+                            <select class="inp" id="setting-gemini-model">
+                                <option value="gemini-2.0-flash">gemini-2.0-flash (fast, recommended)</option>
+                                <option value="gemini-2.5-flash">gemini-2.5-flash</option>
+                                <option value="gemini-2.5-pro">gemini-2.5-pro (best quality)</option>
+                                <option value="gemini-1.5-flash">gemini-1.5-flash</option>
+                            </select>
+                        </div>
+                        <button onclick="saveAiSettings(true)" class="btn btn-p" style="width:100%;">Save SQL Ai Settings</button>
                     </div>
                     <div class="card" style="margin-bottom:12px;">
                         <div style="font-weight:700;font-size:14px;margin-bottom:16px;color:var(--primary);"><i class="fas fa-globe mr-2"></i>Website Config</div>
@@ -1555,7 +1612,7 @@ const COLLECTIONS = {
     PAYMENTS:'payments', WITHDRAWALS:'withdrawals', TRANSFERS:'transfers',
     INVESTMENTS:'investments', NOTIFICATIONS:'notifications',
     KYC:'kyc', REPORTS:'reports', ORDERS:'orders', ADMIN_LOGS:'adminLogs',
-    WEBSITE_CONFIG:'website'
+    WEBSITE_CONFIG:'website', CHATS:'chats'
 };
 
 const cloudinaryConfig = { cloudName:'debp1kjtm', uploadPreset:'sql_admin', folder:'sql_uploads' };
@@ -1732,7 +1789,7 @@ function switchTab(tab) {
 function loadTabData(tab) {
     if (tab === 'home') { loadRecentActivity(); }
     else if (tab === 'payment') { loadPaymentData(); }
-    else if (tab === 'allusers') { if (currentUsersTab === 'users') loadUsers(); else if (currentUsersTab === 'kyc') loadKYC(); else if (currentUsersTab === 'reports') loadReports(); else if (currentUsersTab === 'adminlogs') loadAdminLogs(); }
+    else if (tab === 'allusers') { if (currentUsersTab === 'users') loadUsers(); else if (currentUsersTab === 'kyc') loadKYC(); else if (currentUsersTab === 'reports') loadReports(); else if (currentUsersTab === 'chats') loadChats('open'); else if (currentUsersTab === 'adminlogs') loadAdminLogs(); }
     else if (tab === 'tools') { if (currentToolsTab === 'forex') loadForexAdmin(); else if (currentToolsTab === 'cfd') loadCfdMonitor(); else if (currentToolsTab === 'invest') loadInvestPlans(); else if (currentToolsTab === 'analytics') loadAnalytics(7); else if (currentToolsTab === 'notifications') loadNotificationsHistory(); else if (currentToolsTab === 'settings') loadSettings(); }
 }
 
@@ -1767,7 +1824,7 @@ function switchWithdrawalStatusTab(status) {
 
 function switchUsersTab(tab) {
     currentUsersTab = tab;
-    ['users','kyc','reports','adminlogs'].forEach(t => {
+    ['users','kyc','reports','chats','adminlogs'].forEach(t => {
         const btn = document.getElementById(`log-tab-${t}`);
         const content = document.getElementById(`log-${t}-content`);
         if (t === tab) { if(btn) btn.classList.add('active'); if(content) content.style.display = ''; }
@@ -1776,6 +1833,7 @@ function switchUsersTab(tab) {
     if (tab === 'users') loadUsers();
     else if (tab === 'kyc') loadKYC('pending');
     else if (tab === 'reports') loadReports('open');
+    else if (tab === 'chats') loadChats('open');
     else if (tab === 'adminlogs') loadAdminLogs();
 }
 // Backward compatibility alias
@@ -3252,6 +3310,180 @@ function deleteReport(id) {
     });
 }
 
+
+// ═══════════════════════════════════════════════════
+// 💬 SPOT TEAM LIVE CHAT INBOX
+// ═══════════════════════════════════════════════════
+let currentChatUid = null;
+let chatUnsub = null;
+
+function chatEsc(v) {
+    return String(v === null || v === undefined ? '' : v)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+        .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function chatMs(t) {
+    return t && t.toMillis ? t.toMillis() : (t && t.seconds ? t.seconds * 1000 : 0);
+}
+function chatTime(t) {
+    const ms = chatMs(t);
+    if (!ms) return '—';
+    const d = new Date(ms);
+    return d.toLocaleDateString('en-IN') + ' ' + d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+}
+function chatShort(t) {
+    const ms = chatMs(t);
+    if (!ms) return 'now';
+    const diff = Date.now() - ms;
+    if (diff < 60000) return 'just now';
+    if (diff < 3600000) return Math.floor(diff/60000) + 'm ago';
+    if (diff < 86400000) return Math.floor(diff/3600000) + 'h ago';
+    return new Date(ms).toLocaleDateString('en-IN');
+}
+
+function loadChats(filter = 'open', btn = null) {
+    if (btn) { document.querySelectorAll('#log-chats-content .chip').forEach(c=>c.classList.remove('active')); btn.classList.add('active'); }
+    closeChatThread();
+    const list = document.getElementById('chats-list');
+    list.innerHTML = skeletonCards(3);
+    const base = db.collection(COLLECTIONS.CHATS);
+    const q = filter === 'all' ? base.limit(50) : base.where('status','==',filter).limit(50);
+    q.get().then(snap => {
+        if (snap.empty) {
+            list.innerHTML = '<div class="empty-state"><i class="fas fa-comments"></i><p>No chat threads yet</p></div>';
+            updateChatsBadge(0);
+            return;
+        }
+        const docs = snap.docs.slice().sort((a,b)=>chatMs(b.data().lastAt)-chatMs(a.data().lastAt));
+        list.innerHTML = docs.map(doc => {
+            const d = doc.data();
+            const unread = Number(d.unreadAdmin) || 0;
+            const open = (d.status||'open') === 'open';
+            return `<div class="card" style="cursor:pointer;" onclick="openChat('${chatEsc(d.uid||doc.id)}')">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
+                    <div style="min-width:0;">
+                        <div style="font-weight:700;display:flex;align-items:center;gap:8px;">
+                            ${chatEsc(d.name || 'Unknown user')}
+                            ${unread>0?`<span class="badge b-yellow" style="font-size:10px;">${unread} new</span>`:''}
+                        </div>
+                        <div style="color:var(--textG);font-size:12px;">${chatEsc(d.contact||'—')}${d.uid?` · <span style="font-family:monospace;">${chatEsc(String(d.uid).substring(0,14))}…</span>`:''}</div>
+                    </div>
+                    <div style="text-align:right;flex-shrink:0;">
+                        <span class="badge ${open?'b-yellow':'b-green'}">${chatEsc(d.status||'open')}</span>
+                        <div style="color:var(--textG);font-size:11px;margin-top:6px;">${chatShort(d.lastAt)}</div>
+                    </div>
+                </div>
+                <div style="color:var(--text);font-size:13px;margin-top:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${chatEsc(d.lastMessage || '…')}</div>
+            </div>`;
+        }).join('');
+        updateChatsBadge(docs.reduce((s,d)=>s+(Number((d.data&&d.data()).unreadAdmin)||0),0));
+    }).catch(e => {
+        list.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle" style="color:var(--danger);"></i><p>Chats unavailable: ' + chatEsc(e.message) + '</p></div>';
+    });
+}
+
+function updateChatsBadge(n) {
+    const b = document.getElementById('chats-badge');
+    if (!b) return;
+    b.textContent = n;
+    b.style.display = n > 0 ? 'inline-block' : 'none';
+}
+
+function openChat(uid) {
+    if (!uid) return;
+    currentChatUid = uid;
+    document.getElementById('chats-list').style.display = 'none';
+    const th = document.getElementById('chat-thread');
+    th.style.display = 'block';
+    document.getElementById('chat-thread-name').textContent = 'Loading…';
+    document.getElementById('chat-thread-meta').textContent = uid;
+    document.getElementById('chat-msgs').innerHTML = '<div class="skel" style="height:24px;width:60%;"></div>';
+    document.getElementById('chat-profile-btn').style.display = uid ? '' : 'none';
+
+    db.collection(COLLECTIONS.CHATS).doc(uid).get().then(doc => {
+        const d = doc.exists ? doc.data() : {};
+        document.getElementById('chat-thread-name').textContent = d.name || uid;
+        document.getElementById('chat-thread-meta').innerHTML = chatEsc(d.contact || '—') + ' · joined ' + chatTime(d.createdAt);
+    }).catch(()=>{});
+
+    // clear unread marker as soon as admin opens the thread
+    db.collection(COLLECTIONS.CHATS).doc(uid).set({ unreadAdmin: 0 }, { merge:true }).catch(()=>{});
+
+    if (chatUnsub) { try { chatUnsub(); } catch(e){} chatUnsub = null; }
+    try {
+        chatUnsub = db.collection(COLLECTIONS.CHATS).doc(uid).collection('messages')
+            .where('uid','==',uid).limit(200)
+            .onSnapshot(snap => {
+                const docs = snap.docs.map(x=>({id:x.id,...x.data()}));
+                docs.sort((a,b)=>chatMs(a.at)-chatMs(b.at));
+                const box = document.getElementById('chat-msgs');
+                if (!docs.length) {
+                    box.innerHTML = '<div style="color:var(--textG);font-size:13px;text-align:center;padding:24px;">No messages yet. Say hello 👋</div>';
+                    return;
+                }
+                const stick = box.scrollTop + box.clientHeight >= box.scrollHeight - 60;
+                box.innerHTML = docs.map(m => {
+                    const admin = m.from === 'admin';
+                    return `<div style="max-width:78%;${admin?'align-self:flex-end;':'align-self:flex-start;'}">
+                        <div style="background:${admin?'var(--primary-dim)':'var(--surfaceL)'};border:1px solid ${admin?'var(--primary)':'var(--border)'};border-radius:12px;padding:8px 11px;font-size:13px;white-space:pre-wrap;word-break:break-word;">${chatEsc(m.text)}</div>
+                        <div style="color:var(--textG);font-size:10px;margin-top:3px;${admin?'text-align:right;':''}">${admin?'You':chatEsc((m.name||'User'))} · ${chatTime(m.at)}</div>
+                    </div>`;
+                }).join('');
+                if (stick) box.scrollTop = box.scrollHeight;
+            }, err => {
+                document.getElementById('chat-msgs').innerHTML = '<div style="color:var(--danger);font-size:13px;text-align:center;padding:24px;">Could not load messages: ' + chatEsc(err.message) + '</div>';
+            });
+    } catch(e) {
+        document.getElementById('chat-msgs').innerHTML = '<div style="color:var(--danger);font-size:13px;text-align:center;padding:24px;">Could not open this thread.</div>';
+    }
+}
+
+function closeChatThread() {
+    if (chatUnsub) { try { chatUnsub(); } catch(e){} chatUnsub = null; }
+    currentChatUid = null;
+    const th = document.getElementById('chat-thread');
+    const list = document.getElementById('chats-list');
+    if (th) th.style.display = 'none';
+    if (list) list.style.display = '';
+}
+
+function sendChatReply() {
+    const inp = document.getElementById('chat-reply');
+    const uid = currentChatUid;
+    if (!uid || !inp) return;
+    const text = inp.value.trim().slice(0,1200);
+    if (!text) return;
+    inp.value = '';
+    const batch = db.batch();
+    const msgRef = db.collection(COLLECTIONS.CHATS).doc(uid).collection('messages').doc();
+    batch.set(msgRef, {
+        uid: uid, from: 'admin', text: text,
+        at: firebase.firestore.FieldValue.serverTimestamp(),
+        read: false,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    batch.set(db.collection(COLLECTIONS.CHATS).doc(uid), {
+        uid: uid, lastMessage: text.slice(0,180),
+        lastAt: firebase.firestore.FieldValue.serverTimestamp(),
+        unreadUser: firebase.firestore.FieldValue.increment(1),
+        status: 'open',
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge:true });
+    batch.commit()
+        .then(() => { logAdminAction('chat_reply','Replied to chat ' + uid); loadChats('open'); if (currentChatUid === uid) { /* keep thread open */ } })
+        .catch(e => { showToast(e.message,'err'); inp.value = text; });
+}
+
+function markChatClosed() {
+    const uid = currentChatUid;
+    if (!uid) return;
+    showConfirm('Close Chat','Mark this conversation as resolved?','success',() => {
+        db.collection(COLLECTIONS.CHATS).doc(uid).set({ status:'closed', closedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge:true })
+            .then(() => { showToast('Chat resolved ✓'); logAdminAction('chat_close','Closed chat ' + uid); closeChatThread(); loadChats('open'); })
+            .catch(e => showToast(e.message,'err'));
+    });
+}
+
 // ═══════════════════════════════════════════════════
 // 📝 ADMIN LOGS
 // ═══════════════════════════════════════════════════
@@ -4081,7 +4313,10 @@ function markAllNotifRead() {
 function loadSettings() {
     db.collection(COLLECTIONS.ADMIN_CONFIG).doc('config').get()
         .then(doc => { if (doc.exists) { const d = doc.data(); document.getElementById('setting-upi').value = d.upi||''; document.getElementById('setting-usdt').value = d.usdtAddress||'';
-                if (Number(d.usdtToInr) > 0) { setAdmRate(Number(d.usdtToInr)); document.getElementById('setting-usdtrate').value = d.usdtToInr; } else { document.getElementById('setting-usdtrate').value = admRate; } } })
+                if (Number(d.usdtToInr) > 0) { setAdmRate(Number(d.usdtToInr)); document.getElementById('setting-usdtrate').value = d.usdtToInr; } else { document.getElementById('setting-usdtrate').value = admRate; }
+                const gk = document.getElementById('setting-gemini'); if (gk) gk.value = d.geminiApiKey || '';
+                const gm = document.getElementById('setting-gemini-model'); if (gm) gm.value = d.geminiModel || 'gemini-2.0-flash';
+                const tg = document.getElementById('toggle-ai'); if (tg) tg.checked = !(d.aiEnabled === false); } })
         .catch(()=>{});
     db.collection(COLLECTIONS.WEBSITE_CONFIG).doc('config').get()
         .then(doc => {
@@ -4098,6 +4333,24 @@ function loadSettings() {
             }
         })
         .catch(()=>{});
+}
+
+function saveAiSettings(fromButton) {
+    const key = (document.getElementById('setting-gemini') || {}).value || '';
+    const model = (document.getElementById('setting-gemini-model') || {}).value || 'gemini-2.0-flash';
+    const enabled = document.getElementById('toggle-ai') ? document.getElementById('toggle-ai').checked : true;
+    if (fromButton && !key.trim() && enabled) {
+        showToast('Enter a Gemini API key or turn SQL Ai off', 'err');
+        return;
+    }
+    db.collection(COLLECTIONS.ADMIN_CONFIG).doc('config').set({
+        geminiApiKey: key.trim(),
+        geminiModel: model,
+        aiEnabled: !!enabled,
+        aiUpdatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge:true })
+        .then(() => { showToast('SQL Ai settings saved ✓'); logAdminAction('update_ai_settings','SQL Ai ' + (enabled?'enabled':'disabled') + ' · ' + model); })
+        .catch(e => showToast(e.message,'err'));
 }
 
 function savePaymentSettings() {
