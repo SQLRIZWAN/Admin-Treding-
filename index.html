@@ -1719,10 +1719,12 @@ auth.onAuthStateChanged(user => {
         // Firestore rules are the real gate, but the panel must not pretend
         // to be an authorisation boundary on its own.
         const onAllowList = ALLOWED_ADMINS.includes(user.email);
-        // F-3: an allow-listed but UNVERIFIED admin must not get the panel —
-        // but we must not lock them out either, so offer a resend instead of
-        // a silent signOut.
-        const isAdmin = onAllowList && user.emailVerified;
+        // NOTE: email verification is deliberately NOT required here.
+        // The admin address (sql@gmail.com) is not a mailbox we can receive
+        // mail on, so a verification gate locked the owner out entirely.
+        // Password + exact allow-list match is the gate; Firestore rules
+        // independently re-check the same email list on every read/write.
+        const isAdmin = onAllowList;
         if (isAdmin) {
             currentUser = user;
             document.getElementById('login-screen').style.display = 'none';
@@ -1738,11 +1740,6 @@ auth.onAuthStateChanged(user => {
             loadTabData('home');
             ensureAiConfig().then(startChatAiEngine);
             setupKeyboardHide();
-        } else if (onAllowList) {
-            // allow-listed, email not verified yet
-            document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('admin-panel').style.display = 'none';
-            showVerifyGate(user);
         } else {
             showToast('Unauthorized access', 'err');
             auth.signOut();
@@ -1756,40 +1753,6 @@ auth.onAuthStateChanged(user => {
 });
 
 // ── F-3: verification gate for an allow-listed but unverified admin ──
-function showVerifyGate(user) {
-    const old = document.getElementById('verify-gate');
-    if (old) old.remove();
-    const box = document.createElement('div');
-    box.id = 'verify-gate';
-    box.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;'
-        + 'justify-content:center;background:rgba(10,12,20,.96);padding:20px;font-family:system-ui,sans-serif';
-    box.innerHTML = `
-      <div style="max-width:420px;background:#151a2e;border:1px solid #2a3350;border-radius:16px;padding:28px;text-align:center;color:#e8ecf7">
-        <div style="font-size:40px;margin-bottom:12px">✉️</div>
-        <h2 style="margin:0 0 10px;font-size:20px">Verify your admin email</h2>
-        <p style="margin:0 0 18px;font-size:14px;color:#9aa4c0;line-height:1.6">
-          <b>${user.email}</b> is on the admin allow-list, but the address is not verified yet.
-          Open the verification link we send, then reload this page.
-        </p>
-        <button id="vg-resend" style="width:100%;padding:12px;border:0;border-radius:10px;background:#6c5ce7;color:#fff;font-weight:600;cursor:pointer;margin-bottom:10px">
-          Resend verification email
-        </button>
-        <button id="vg-out" style="width:100%;padding:12px;border:1px solid #2a3350;border-radius:10px;background:transparent;color:#9aa4c0;cursor:pointer">
-          Sign out
-        </button>
-        <p id="vg-msg" style="margin:14px 0 0;font-size:12px;color:#9aa4c0;min-height:16px"></p>
-      </div>`;
-    document.body.appendChild(box);
-    const msg = box.querySelector('#vg-msg');
-    box.querySelector('#vg-resend').addEventListener('click', async (e) => {
-        e.target.disabled = true; msg.textContent = 'Sending...';
-        try { await user.sendEmailVerification(); msg.textContent = 'Sent — check your inbox (and spam).'; }
-        catch (err) { msg.textContent = 'Could not send: ' + (err.message || err.code); }
-        e.target.disabled = false;
-    });
-    box.querySelector('#vg-out').addEventListener('click', () => { box.remove(); auth.signOut(); });
-}
-
 function handleAdminLogin() {
     const email = document.getElementById('admin-email').value.trim();
     const password = document.getElementById('admin-password').value;
