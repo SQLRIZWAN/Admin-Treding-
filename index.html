@@ -547,6 +547,59 @@ select.inp:focus{box-shadow:0 0 0 3px rgba(0,200,83,.15);}
                         </div>
                     </div>
                 </div>
+                <!-- Visitor Analytics Card -->
+                <div class="card" style="margin-bottom:16px;border-left:3px solid var(--warning);">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                        <div style="font-weight:700;font-size:13px;"><i class="fas fa-chart-line" style="color:var(--warning);margin-right:6px;"></i>Visitors (treding.store)</div>
+                        <span class="badge b-blue" id="vis-badge">Live</span>
+                    </div>
+                    <div style="display:flex;gap:16px;">
+                        <div style="text-align:center;flex:1;">
+                            <div style="font-size:22px;font-weight:700;" id="vis-today">—</div>
+                            <div style="color:var(--textG);font-size:11px;">Today</div>
+                        </div>
+                        <div style="width:1px;background:var(--border);"></div>
+                        <div style="text-align:center;flex:1;">
+                            <div style="font-size:22px;font-weight:700;color:var(--primary);" id="vis-yesterday">—</div>
+                            <div style="color:var(--textG);font-size:11px;">Yesterday</div>
+                        </div>
+                        <div style="width:1px;background:var(--border);"></div>
+                        <div style="text-align:center;flex:1;">
+                            <div style="font-size:22px;font-weight:700;color:var(--purple);" id="vis-7d">—</div>
+                            <div style="color:var(--textG);font-size:11px;">Last 7 Days</div>
+                        </div>
+                        <div style="width:1px;background:var(--border);"></div>
+                        <div style="text-align:center;flex:1;">
+                            <div style="font-size:22px;font-weight:700;color:var(--warning);" id="vis-30d">—</div>
+                            <div style="color:var(--textG);font-size:11px;">Last 30 Days</div>
+                        </div>
+                        <div style="width:1px;background:var(--border);"></div>
+                        <div style="text-align:center;flex:1;">
+                            <div style="font-size:22px;font-weight:700;" id="vis-total">—</div>
+                            <div style="color:var(--textG);font-size:11px;">All Time</div>
+                        </div>
+                    </div>
+                    <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border);">
+                        <div style="display:flex;gap:16px;">
+                            <div style="flex:1;">
+                                <div style="color:var(--textG);font-size:11px;">New vs Returning (30d)</div>
+                                <div style="font-size:13px;font-weight:600;margin-top:2px;">
+                                    <span id="vis-new" style="color:var(--primary);">—</span> new &nbsp;·&nbsp;
+                                    <span id="vis-returning" style="color:var(--textG);">—</span> returning
+                                </div>
+                            </div>
+                            <div style="width:1px;background:var(--border);"></div>
+                            <div style="flex:1;">
+                                <div style="color:var(--textG);font-size:11px;">Devices (30d)</div>
+                                <div style="font-size:13px;font-weight:600;margin-top:2px;">
+                                    <span id="vis-mobile" style="color:var(--purple);">—</span> mobile &nbsp;·&nbsp;
+                                    <span id="vis-desktop" style="color:var(--info);">—</span> desktop
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="vis-trend" style="margin-top:10px;display:flex;align-items:flex-end;gap:3px;height:44px;"></div>
+                </div>
                 <!-- Recent Activity -->
                 <div style="font-weight:700;font-size:14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;">
                     <span>Recent Activity</span>
@@ -1906,12 +1959,99 @@ function setupKeyboardHide() {
 // ═══════════════════════════════════════════════════
 // 📊 DASHBOARD / HOME
 // ═══════════════════════════════════════════════════
+// ── Visitor analytics (pageVisits) ─────────────────────────────────
+//  Store ek (day + browser) ka doc banata hai; ek browser = ek visit/day.
+//  Yahan hum un docs ko read karke totals nikalte hain.
+const VISITS_COLL = 'pageVisits';
+function visDayKey(d) {
+    const p = n => String(n).padStart(2, '0');
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+}
+function loadVisitorStats() {
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = Number(v || 0).toLocaleString(); };
+    const badge = document.getElementById('vis-badge');
+    db.collection(VISITS_COLL)
+      .orderBy('ts', 'desc')
+      .limit(3000)
+      .get()
+      .then(snap => {
+          if (!snap || snap.empty) {
+              ['vis-today','vis-yesterday','vis-7d','vis-30d','vis-total','vis-new','vis-returning','vis-mobile','vis-desktop']
+                  .forEach(i => set(i, 0));
+              const t = document.getElementById('vis-trend'); if (t) t.innerHTML = '<span style="color:var(--textG);font-size:11px;">No visits recorded yet — data appears once visitors load the site.</span>';
+              if (badge) { badge.textContent = 'No data'; badge.style.display = ''; }
+              return;
+          }
+          const today = new Date();
+          const dToday = new Date(today); dToday.setHours(0,0,0,0);
+          const dYest = new Date(dToday); dYest.setDate(dYest.getDate() - 1);
+          const d7 = new Date(dToday); d7.setDate(d7.getDate() - 6);
+          const d30 = new Date(dToday); d30.setDate(d30.getDate() - 29);
+
+          let nToday = 0, nYest = 0, n7 = 0, n30 = 0, total = 0, nNew = 0, nBack = 0, mob = 0, desk = 0;
+          const perDay = {};
+
+          snap.forEach(d => {
+              const v = d.data() || {};
+              const key = v.day || '';
+              const dt = key ? new Date(key + 'T00:00:00') : null;
+              const t = v.ts && typeof v.ts.toDate === 'function' ? v.ts.toDate() : (dt || null);
+              if (!t) return;
+              total++;
+              if (t >= dToday) nToday++;
+              else if (t >= dYest) nYest++;
+              if (t >= d7) n7++;
+              if (t >= d30) {
+                  n30++;
+                  if (v.first) nNew++; else nBack++;
+                  if (v.device === 'mobile') mob++; else desk++;
+              }
+              perDay[key] = (perDay[key] || 0) + 1;
+          });
+
+          set('vis-today', nToday);
+          set('vis-yesterday', nYest);
+          set('vis-7d', n7);
+          set('vis-30d', n30);
+          set('vis-total', total);
+          set('vis-new', nNew);
+          set('vis-returning', nBack);
+          set('vis-mobile', mob);
+          set('vis-desktop', desk);
+          if (badge) { badge.textContent = nToday + ' today'; badge.style.display = ''; }
+
+          // 14-day sparkline
+          const bars = [];
+          for (let i = 13; i >= 0; i--) {
+              const d = new Date(dToday); d.setDate(d.getDate() - i);
+              bars.push({ day: visDayKey(d), n: perDay[visDayKey(d)] || 0 });
+          }
+          const max = Math.max(1, ...bars.map(b => b.n));
+          const t = document.getElementById('vis-trend');
+          if (t) {
+              t.innerHTML = bars.map(b => {
+                  const h = Math.round((b.n / max) * 40);
+                  const col = b.n === max && b.n > 0 ? 'var(--primary)' : 'rgba(108,92,231,.55)';
+                  return '<div title="' + b.day + ': ' + b.n + ' visit(s)" style="flex:1;display:flex;flex-direction:column;'
+                       + 'justify-content:flex-end;align-items:center;gap:3px;">'
+                       + '<div style="width:100%;height:' + Math.max(b.n ? 3 : 1, h) + 'px;background:' + col + ';border-radius:2px 2px 0 0;"></div>'
+                       + '</div>';
+              }).join('');
+          }
+      })
+      .catch(e => {
+          console.error('visitors:', e);
+          if (badge) { badge.textContent = 'Unavailable'; badge.style.display = ''; }
+      });
+}
+
 function setHomeGreeting() {
     // Greeting card removed - keeping function for backward compatibility
 }
 
 function initializeDashboardListeners() {
     cleanupListeners();
+    loadVisitorStats();
 
     // ── Users count (lightweight snapshot) ──
     const u1 = db.collection(COLLECTIONS.USERS).onSnapshot({includeMetadataChanges:false}, snap => {
